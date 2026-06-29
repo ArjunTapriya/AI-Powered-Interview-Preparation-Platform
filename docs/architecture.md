@@ -1,4 +1,4 @@
-# Antigravity Prep Architecture
+# Interview Prep Architecture
 
 ## Layers
 1. **Controller Layer:** Express routes & basic validations.

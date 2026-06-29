@@ -100,30 +100,30 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [accessToken, setAccessTokenState] = useState<string | null>(() => {
-    return localStorage.getItem("antigravity_token");
+    return localStorage.getItem("interview_prep_token");
   });
 
   const setAccessToken = (token: string | null) => {
     setAccessTokenState(token);
     if (token) {
-      localStorage.setItem("antigravity_token", token);
+      localStorage.setItem("interview_prep_token", token);
     } else {
-      localStorage.removeItem("antigravity_token");
+      localStorage.removeItem("interview_prep_token");
     }
   };
 
   const [user, setUser] = useState<UserProfile>(() => {
-    const stored = localStorage.getItem("antigravity_user");
+    const stored = localStorage.getItem("interview_prep_user");
     return stored ? JSON.parse(stored) : defaultUser;
   });
 
   const [streak, setStreak] = useState<number>(() => {
-    const stored = localStorage.getItem("antigravity_streak");
+    const stored = localStorage.getItem("interview_prep_streak");
     return stored ? parseInt(stored, 10) : 14;
   });
 
   const [history, setHistory] = useState<InterviewSession[]>(() => {
-    const stored = localStorage.getItem("antigravity_history");
+    const stored = localStorage.getItem("interview_prep_history");
     return stored ? JSON.parse(stored) : initialHistory;
   });
 
@@ -382,71 +382,71 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [user.isLoggedIn, accessToken]);
 
   const [activeChallenge, setActiveChallengeState] = useState<any>(() => {
-    const stored = localStorage.getItem("antigravity_active_challenge");
+    const stored = localStorage.getItem("interview_prep_active_challenge");
     return stored ? JSON.parse(stored) : null;
   });
 
   const setActiveChallenge = (challenge: any) => {
     setActiveChallengeState(challenge);
     if (challenge) {
-      localStorage.setItem("antigravity_active_challenge", JSON.stringify(challenge));
+      localStorage.setItem("interview_prep_active_challenge", JSON.stringify(challenge));
     } else {
-      localStorage.removeItem("antigravity_active_challenge");
+      localStorage.removeItem("interview_prep_active_challenge");
     }
   };
 
   const [currentEvaluation, setCurrentEvaluation] = useState<InterviewSession | null>(null);
   const [currentEvaluationId, setCurrentEvaluationIdState] = useState<string | null>(() => {
-    return localStorage.getItem("antigravity_eval_id");
+    return localStorage.getItem("interview_prep_eval_id");
   });
 
   const setCurrentEvaluationId = (id: string | null) => {
     setCurrentEvaluationIdState(id);
     if (id) {
-      localStorage.setItem("antigravity_eval_id", id);
+      localStorage.setItem("interview_prep_eval_id", id);
     } else {
-      localStorage.removeItem("antigravity_eval_id");
+      localStorage.removeItem("interview_prep_eval_id");
     }
   };
   const [activePersona, setActivePersona] = useState<"Nitpicker" | "Coach" | "Silent" | "Interrupter">("Coach");
   const [stressActive, setStressActive] = useState<boolean>(false);
   const [roadmapCompletedNodes, setRoadmapCompletedNodes] = useState<string[]>(() => {
-    const stored = localStorage.getItem("antigravity_roadmap_nodes");
+    const stored = localStorage.getItem("interview_prep_roadmap_nodes");
     return stored ? JSON.parse(stored) : ["dsa-basics", "sys-design-basics"];
   });
 
   const [themeAccent, setThemeAccentState] = useState<"cyan" | "blue" | "purple" | "emerald" | "rose">(
-    () => (localStorage.getItem("antigravity_theme") as any) || "cyan"
+    () => (localStorage.getItem("interview_prep_theme") as any) || "cyan"
   );
 
   const [themeMode, setThemeModeState] = useState<"dark" | "light">(
-    () => (localStorage.getItem("antigravity_mode") as any) || "dark"
+    () => (localStorage.getItem("interview_prep_mode") as any) || "dark"
   );
 
   const setThemeAccent = (accent: "cyan" | "blue" | "purple" | "emerald" | "rose") => {
     setThemeAccentState(accent);
-    localStorage.setItem("antigravity_theme", accent);
+    localStorage.setItem("interview_prep_theme", accent);
   };
 
   const setThemeMode = (mode: "dark" | "light") => {
     setThemeModeState(mode);
-    localStorage.setItem("antigravity_mode", mode);
+    localStorage.setItem("interview_prep_mode", mode);
   };
 
   useEffect(() => {
-    localStorage.setItem("antigravity_user", JSON.stringify(user));
+    localStorage.setItem("interview_prep_user", JSON.stringify(user));
   }, [user]);
 
   useEffect(() => {
-    localStorage.setItem("antigravity_streak", streak.toString());
+    localStorage.setItem("interview_prep_streak", streak.toString());
   }, [streak]);
 
   useEffect(() => {
-    localStorage.setItem("antigravity_history", JSON.stringify(history));
+    localStorage.setItem("interview_prep_history", JSON.stringify(history));
   }, [history]);
 
   useEffect(() => {
-    localStorage.setItem("antigravity_roadmap_nodes", JSON.stringify(roadmapCompletedNodes));
+    localStorage.setItem("interview_prep_roadmap_nodes", JSON.stringify(roadmapCompletedNodes));
   }, [roadmapCompletedNodes]);
 
   useEffect(() => {
@@ -482,8 +482,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setRoadmapCompletedNodes(["dsa-basics", "sys-design-basics"]);
     setThemeAccent("cyan");
     setThemeMode("dark");
-    localStorage.removeItem("antigravity_screen");
-    localStorage.removeItem("antigravity_token");
+    localStorage.removeItem("interview_prep_screen");
+    localStorage.removeItem("interview_prep_token");
     setAccessToken(null);
   };
 

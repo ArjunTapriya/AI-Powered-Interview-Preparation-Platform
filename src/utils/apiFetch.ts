@@ -1,7 +1,7 @@
 const API_BASE_URL = "http://localhost:4000/api";
 
 export async function apiFetch(endpoint: string, options: RequestInit = {}): Promise<Response> {
-  let token = localStorage.getItem("antigravity_token");
+  let token = localStorage.getItem("interview_prep_token");
   
   const headers = new Headers(options.headers || {});
   if (token && !headers.has("Authorization")) {
@@ -29,7 +29,7 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}): Pro
         if (refreshData.success && refreshData.data?.accessToken) {
           // Update token in localStorage
           token = refreshData.data.accessToken;
-          localStorage.setItem("antigravity_token", token as string);
+          localStorage.setItem("interview_prep_token", token as string);
 
           // Retry original request
           headers.set("Authorization", `Bearer ${token}`);
@@ -40,11 +40,11 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}): Pro
         }
       } else {
         // Refresh failed, clear token and let the application handle logout via state
-        localStorage.removeItem("antigravity_token");
+        localStorage.removeItem("interview_prep_token");
       }
     } catch (error) {
       console.error("Token refresh failed:", error);
-      localStorage.removeItem("antigravity_token");
+      localStorage.removeItem("interview_prep_token");
     }
   }
 

@@ -138,7 +138,7 @@ export const AuthLayout: React.FC = () => {
 
         <div className="mt-8 text-center text-sm border-t border-surface-border pt-6">
           <span className="text-gray-500">
-            {isLogin ? "New to Antigravity Prep?" : "Already have an account?"}
+            {isLogin ? "New to Interview Prep?" : "Already have an account?"}
           </span>{" "}
           <button
             onClick={() => {

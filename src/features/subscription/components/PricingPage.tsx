@@ -60,7 +60,7 @@ export const PricingPage: React.FC = () => {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_YourTestKey", // Provide fallback or make sure env has it
         amount: amount,
         currency: currency,
-        name: "Antigravity Interview Prep",
+        name: "Interview Prep Interview Prep",
         description: `Upgrade to ${tier} Plan`,
         order_id: order_id,
         handler: async function (response: any) {

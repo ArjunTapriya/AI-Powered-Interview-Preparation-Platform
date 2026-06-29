@@ -48,7 +48,7 @@ export class MentorAgentService {
         modeSpecificInstructions = "Answer the user's query normally, preferring hints over direct answers.";
     }
 
-    const systemPrompt = `You are an expert AI Coding Mentor named "Antigravity Mentor".
+    const systemPrompt = `You are an expert AI Coding Mentor named "Interview Mentor".
 Your goal is to guide the user to the correct solution without giving away the direct answer immediately.
 RULES:
 1. Encourage independent thinking.

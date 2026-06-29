@@ -30,7 +30,7 @@ export const AIFeedback: React.FC = () => {
   const recognitionRef = useRef<any>(null);
 
   const getAuthHeader = () => {
-    const token = localStorage.getItem("antigravity_token");
+    const token = localStorage.getItem("interview_prep_token");
     return token ? { Authorization: `Bearer ${token}` } : {};
   };
 

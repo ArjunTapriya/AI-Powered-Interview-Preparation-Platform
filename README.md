@@ -1,6 +1,6 @@
-# Antigravity Prep Platform
+# Interview Prep Platform
 
-Antigravity Prep is a production-grade SaaS platform designed to help software engineers prepare for technical interviews using AI-driven simulated interviews, code execution, and system design sandboxes.
+Interview Prep is a production-grade SaaS platform designed to help software engineers prepare for technical interviews using AI-driven simulated interviews, code execution, and system design sandboxes.
 
 ## Features
 

@@ -121,7 +121,7 @@ export const OnboardingFlow: React.FC = () => {
               Set Your Career Vector
             </h2>
             <p className="text-gray-400 mt-2">
-              Antigravity adapts preparation algorithms to your target standard.
+              Interview Prep adapts preparation algorithms to your target standard.
             </p>
           </div>
 

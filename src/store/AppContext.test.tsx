@@ -35,8 +35,8 @@ describe("AppContext", () => {
   });
 
   it("should load user and token from localStorage if present", () => {
-    localStorage.setItem("antigravity_token", "test-token");
-    localStorage.setItem("antigravity_user", JSON.stringify({ name: "Alice", isLoggedIn: true }));
+    localStorage.setItem("interview_prep_token", "test-token");
+    localStorage.setItem("interview_prep_user", JSON.stringify({ name: "Alice", isLoggedIn: true }));
 
     render(
       <AppProvider>
