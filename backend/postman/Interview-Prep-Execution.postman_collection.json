@@ -1,0 +1,134 @@
+{
+  "info": {
+    "name": "Interview Prep Platform API — Code Execution",
+    "_postman_id": "c6a7e8f9-d0a1-2345-bcde-ef0123456789",
+    "description": "Code Execution module endpoints using Judge0 sandbox compilation for the AI-Powered Interview Preparation Platform.\n\nBase URL: `http://localhost:4000/api`\n\nAll responses use:\n```json\n{ \"success\": true, \"message\": \"\", \"data\": {} }\n```",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000/api"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "questionId",
+      "value": ""
+    },
+    {
+      "key": "submissionId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Code Execution",
+      "item": [
+        {
+          "name": "Run Code (On-Demand Compile)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"language\": \"javascript\",\n  \"sourceCode\": \"function twoSum(nums, target) {\\n  return [0, 1];\\n}\",\n  \"stdin\": \"4\\n2 7 11 15\\n9\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/code/run",
+              "host": ["{{baseUrl}}"],
+              "path": ["code", "run"]
+            },
+            "description": "Runs arbitrary code in Node.js, Python, C++, or Java sandbox with custom stdin inputs."
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Code Solution",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.id) {",
+                  "    pm.collectionVariables.set('submissionId', json.data.id);",
+                  "  }",
+                  "  pm.test('POST /code/submit/:questionId — success', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"language\": \"javascript\",\n  \"sourceCode\": \"function twoSum(nums, target) {\\n  // Simple linear lookup to trigger success/failure\\n  const map = {};\\n  for (let i = 0; i < nums.length; i++) {\\n    const complement = target - nums[i];\\n    if (complement in map) {\\n      return [map[complement], i];\\n    }\\n    map[nums[i]] = i;\\n  }\\n  return [];\\n}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/code/submit/{{questionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["code", "submit", "{{questionId}}"]
+            },
+            "description": "Submits code for evaluation against all hidden test cases. Saves submission history details."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Submissions History",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/code/submissions?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["code", "submissions"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Retrieves the logged submission history of compile runs for the current authenticated user."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Submission Details By ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/code/submissions/{{submissionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["code", "submissions", "{{submissionId}}"]
+            },
+            "description": "Retrieves comprehensive test results and assertions for a single code submission."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

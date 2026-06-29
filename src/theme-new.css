@@ -1,0 +1,133 @@
+/* New Theme Variables based on the provided UI design */
+:root {
+  --bg-page-new: #050505; /* Deepest black layer 1 */
+  --surface-solid-new: #0A0A0A; /* Layer 2 */
+  --surface-card-new: rgba(18, 18, 18, 0.95); /* Layer 3 card with slight transparency */
+  --surface-hover-new: #181818; /* Elevated surface */
+  --surface-border-new: rgba(255, 255, 255, 0.04); /* Border glow */
+  --text-primary-new: #FFFFFF;
+  --text-secondary-new: #9CA3AF;
+  --accent-primary: #8B5CF6; /* Primary Purple */
+  --accent-orange: #F97316; /* Neon Orange */
+  --accent-purple: #8B5CF6; /* AI card background */
+}
+
+/* Light Mode Base Theme - Invert only the surfaces, keep accents */
+:root.light {
+  --bg-page-new: #FFFFFF;
+  --surface-solid-new: #F3F4F6;
+  --surface-card-new: rgba(255, 255, 255, 0.95);
+  --surface-hover-new: #E5E7EB;
+  --surface-border-new: rgba(0, 0, 0, 0.06);
+  --text-primary-new: #111827;
+  --text-secondary-new: #4B5563;
+}
+
+/* Theme Color Palettes */
+:root[data-theme="cyan"] {
+  --accent-primary: #06b6d4;
+}
+:root[data-theme="orange"] {
+  --accent-primary: #F97316;
+}
+:root[data-theme="coral"] {
+  --accent-primary: #FF7F50;
+}
+:root[data-theme="amber"] {
+  --accent-primary: #F59E0B;
+}
+:root[data-theme="rust"] {
+  --accent-primary: #B45309;
+}
+:root[data-theme="sunset"] {
+  --accent-primary: #EF4444;
+}
+
+body {
+  background-color: var(--bg-page-new);
+  color: var(--text-primary-new);
+}
+
+.new-card {
+  background-color: var(--surface-card-new);
+  border: 1px solid var(--surface-border-new);
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.new-sidebar {
+  background-color: var(--surface-solid-new);
+  border-right: 1px solid var(--surface-border-new);
+}
+
+.new-sidebar-item {
+  color: var(--text-secondary-new);
+  transition: all 400ms cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.new-sidebar-item:hover {
+  color: var(--text-primary-new);
+  background-color: rgba(255, 255, 255, 0.02);
+  border-right: 2px solid rgba(139, 92, 246, 0.5); /* Subtle purple line */
+}
+
+.new-sidebar-item:hover svg {
+  filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.4));
+}
+
+.new-sidebar-item.active {
+  color: var(--accent-orange);
+  background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.08));
+  border-right: 3px solid var(--accent-orange);
+  box-shadow: inset -10px 0 20px rgba(139, 92, 246, 0.05);
+}
+
+.custom-scrollbar-new::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar-new::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar-new::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 10px;
+}
+.custom-scrollbar-new::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+/* Premium Button Styles */
+.btn-primary-premium {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.9), rgba(249, 115, 22, 0.9));
+  color: white;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+  transition: all 400ms cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.15);
+  border: none;
+}
+
+.btn-primary-premium:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.25);
+  filter: brightness(1.05);
+}
+
+.btn-secondary-premium {
+  background: rgba(18, 18, 18, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: white;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+  transition: all 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-secondary-premium:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.15);
+  background: rgba(139, 92, 246, 0.05);
+  border-color: rgba(139, 92, 246, 0.5);
+}

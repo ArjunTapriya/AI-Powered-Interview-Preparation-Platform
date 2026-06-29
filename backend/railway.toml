@@ -1,0 +1,28 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "npx prisma migrate deploy && node dist/server.js"
+healthcheckPath = "/health/ready"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[env]
+NODE_ENV = "production"
+API_PREFIX = "/api"
+JWT_EXPIRES_IN = "7d"
+JWT_ALGORITHM = "HS256"
+CORS_ORIGINS = "https://your-frontend-domain.com"
+RATE_LIMIT_WINDOW_MS = "900000"
+RATE_LIMIT_MAX = "100"
+MAX_UPLOAD_SIZE_MB = "5"
+UPLOAD_DIR = "uploads"
+SWAGGER_ENABLED = "false"
+SHUTDOWN_TIMEOUT_MS = "10000"
+
+# Set these in Railway dashboard (secrets):
+# DATABASE_URL  — provided by Railway PostgreSQL plugin
+# JWT_SECRET    — generate a strong 32+ char secret
+# PORT          — Railway sets automatically

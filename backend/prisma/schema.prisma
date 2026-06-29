@@ -1,0 +1,493 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// User model
+model User {
+  id               String   @id @default(uuid())
+  email            String   @unique
+  password         String
+  role             Role     @default(USER)
+  isActive         Boolean  @default(true)
+  name             String?
+  targetCompany    String?
+  roleDepth        RoleDepth?
+  prepWeeks        Int?
+  diagnosticCompleted Boolean @default(false)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  streakCount             Int      @default(0)
+  lastActiveDate          DateTime?
+  manualCompletedQuestions String[]
+
+  // Relations
+  subscriptions    Subscription[]
+  supportTickets   SupportTicket[]
+  codeSubmissions  CodeSubmission[]
+  interviewSessions InterviewSession[]
+  roadmapProgresses RoadmapProgress[]
+  prepGuides         PrepGuide[]
+  resume           Resume?
+  paymentTransactions PaymentTransaction[]
+  questionAttemptHistories QuestionAttemptHistory[]
+  conversations      Conversation[]
+  refreshTokens      RefreshToken[]
+  workspaceState     WorkspaceState?
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+model Subscription {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  plan                  SubscriptionPlan   @default(FREE)
+  status                SubscriptionStatus @default(ACTIVE)
+  startDate             DateTime @default(now())
+  endDate               DateTime?
+  razorpayOrderId       String?
+  razorpayPaymentId     String?
+  razorpaySubscriptionId String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+model FeatureFlag {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  enabled   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum TicketStatus {
+  open
+  closed
+  pending
+}
+
+enum TicketPriority {
+  low
+  medium
+  high
+}
+
+model SupportTicket {
+  id          String   @id @default(uuid())
+  userId      String
+  subject     String
+  description String
+  status      TicketStatus @default(open)
+  priority    TicketPriority @default(medium)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum SubscriptionPlan {
+  FREE
+  PRO
+  PREMIUM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  PAST_DUE
+}
+
+enum Difficulty {
+  Easy
+  Medium
+  Hard
+}
+
+enum InterviewType {
+  DSA
+  System_Design
+  Behavioral
+}
+
+enum RoleDepth {
+  Junior
+  Mid_level
+  Senior
+  Staff_Principal
+}
+
+enum RoadmapProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  CAPTURED
+  FAILED
+  REFUNDED
+}
+
+model CodeSubmission {
+  id               String   @id @default(uuid())
+  userId           String
+  questionId       String?
+  sourceCode       String
+  language         String
+  status           String?
+  passedTests      Int?
+  totalTests       Int?
+  runtime          Float?
+  memory           Float?
+  stdout           String?
+  stderr           String?
+  createdAt        DateTime @default(now())
+
+  user             User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question         Question? @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  executionResults ExecutionResult[]
+}
+
+model ExecutionResult {
+  id            String   @id @default(uuid())
+  submissionId  String   @unique
+  output        String
+  success       Boolean
+  testCaseNumber Int?
+  passed        Boolean?
+  expectedOutput String?
+  actualOutput   String?
+  executionTime Float?
+  createdAt     DateTime @default(now())
+  submission    CodeSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+}
+
+model EvaluationReport {
+  id                 String   @id @default(uuid())
+  interviewSessionId String   @unique
+  correctness        Int?
+  speed              Int?
+  architecture       Int?
+  communication      Int?
+  grammar            Int?
+  relevance          Int?
+  score              Int
+  strengths          Json
+  weaknesses         Json
+  recommendations    Json
+  feedback           String?
+  createdAt          DateTime @default(now())
+  interviewSession   InterviewSession @relation(fields: [interviewSessionId], references: [id], onDelete: Cascade)
+}
+
+model InterviewSession {
+  id           String   @id @default(uuid())
+  userId       String
+  interviewType InterviewType
+  status       String
+  createdAt    DateTime @default(now())
+  user         User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  evaluation   EvaluationReport?
+  company      String?
+  overallScore Int?
+  durationMin  Int?
+  codeSnippet  String?
+  optimalCode  String?
+  transcript   String?
+  feedbackNotes String?
+  
+  conversation Conversation?
+}
+
+model Question {
+  id               String   @id @default(uuid())
+  title            String
+  slug             String   @unique
+  problemStatement String
+  realWorldScenario String?
+  difficulty       Difficulty
+  topic            String
+  // Execution template fields (TODO 4)
+  executionTemplate String?  // ARRAY_INPUT | STRING_INPUT | LINKED_LIST | TREE | GRAPH | MATRIX | CUSTOM
+  functionName      String?  // e.g. "twoSum", "reverseList"
+  returnType        String?  // e.g. "number[]", "ListNode", "boolean"
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  // Relations
+  tags               QuestionTag[]
+  hints              QuestionHint[]
+  examples           QuestionExample[]
+  constraints        QuestionConstraint[]
+  testCases          QuestionTestCase[]
+  editorials         QuestionEditorial[]
+  solutions          QuestionSolution[]
+  starterCodes       QuestionStarterCode[]
+  difficultyMetrics  QuestionDifficultyMetrics?
+  analytics          QuestionAnalytics?
+  companyMappings    QuestionCompanyMapping[]
+  attemptHistories   QuestionAttemptHistory[]
+  codeSubmissions    CodeSubmission[]
+}
+
+model QuestionTag {
+  id         String   @id @default(uuid())
+  questionId String
+  name       String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model QuestionHint {
+  id         String   @id @default(uuid())
+  questionId String
+  hintOrder  Int
+  content    String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model QuestionExample {
+  id             String   @id @default(uuid())
+  questionId     String
+  exampleOrder   Int
+  input          String
+  output         String
+  explanation    String?
+  question       Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model QuestionConstraint {
+  id         String   @id @default(uuid())
+  questionId String
+  content    String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model QuestionTestCase {
+  id             String   @id @default(uuid())
+  questionId     String
+  isHidden       Boolean  @default(false)
+  input          String
+  expectedOutput String
+  testCaseType   String?  // e.g., "Minimum Boundary", "Randomized Input"
+  question       Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model QuestionEditorial {
+  id               String   @id @default(uuid())
+  questionId       String   @unique
+  content          String
+  timeComplexity   String
+  spaceComplexity  String
+  authorId         String?
+  question         Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model QuestionSolution {
+  id               String   @id @default(uuid())
+  questionId       String
+  language         String
+  code             String
+  timeComplexity   String?
+  spaceComplexity  String?
+  approachName     String?  // e.g., "Optimal", "Brute Force"
+  question         Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model QuestionStarterCode {
+  id         String   @id @default(uuid())
+  questionId String
+  language   String
+  code       String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  @@unique([questionId, language])
+}
+
+model QuestionDifficultyMetrics {
+  id                 String   @id @default(uuid())
+  questionId         String   @unique
+  acceptanceRate     Float    @default(0)
+  totalAttempts      Int      @default(0)
+  successfulAttempts Int      @default(0)
+  averageRuntimeMs   Float?
+  question           Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model QuestionAnalytics {
+  id         String   @id @default(uuid())
+  questionId String   @unique
+  views      Int      @default(0)
+  upvotes    Int      @default(0)
+  downvotes  Int      @default(0)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model QuestionCompanyMapping {
+  id         String   @id @default(uuid())
+  questionId String
+  companyName String
+  frequency  Int      @default(1)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  @@unique([questionId, companyName])
+}
+
+model QuestionAttemptHistory {
+  id         String   @id @default(uuid())
+  questionId String
+  userId     String
+  status     String   // e.g., "SOLVED", "ATTEMPTED"
+  timeSpentMs Int?
+  createdAt  DateTime @default(now())
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Conversation {
+  id                 String   @id @default(uuid())
+  userId             String
+  interviewSessionId String?  @unique
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interviewSession   InterviewSession? @relation(fields: [interviewSessionId], references: [id], onDelete: Cascade)
+  messages           Message[]
+}
+
+model Message {
+  id             String   @id @default(uuid())
+  conversationId String
+  role           String   // 'user', 'assistant', 'system'
+  content        String
+  messageType    String?  // 'chat', 'hint', 'debug', 'complexity'
+  createdAt      DateTime @default(now())
+  
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
+model RoadmapProgress {
+  id           String   @id @default(uuid())
+  userId       String
+  nodeId       String
+  status       RoadmapProgressStatus @default(NOT_STARTED)
+  completed    Boolean @default(false)
+  completedAt  DateTime?
+  user         User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, nodeId])
+}
+
+// Resume Intelligence model — one resume per user (upsert on re-upload)
+model Resume {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  filename      String
+  originalName  String
+  mimeType      String
+  fileSize      Int
+  extractedText String
+  skills        Json     // string[]
+  experience    Json     // { title, company, duration, description }[]
+  education     Json     // { degree, institution, year }[]
+  projects      Json     // { name, description, tech }[]
+  aiSummary     String?
+  matchScore    Int?     // 0-100 fit score to target role
+  uploadedAt    DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Razorpay payment transaction log
+model PaymentTransaction {
+  id                String   @id @default(uuid())
+  userId            String
+  razorpayOrderId   String   @unique
+  razorpayPaymentId String?
+  razorpaySignature String?
+  amount            Int      // in paise (INR)
+  currency          String   @default("INR")
+  plan              SubscriptionPlan
+  status            PaymentStatus @default(PENDING)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── TODO 8: Refresh Token ────────────────────────────────────────────────────
+model RefreshToken {
+  id          String    @id @default(uuid())
+  userId      String
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+// ─── TODO 2: Workspace State ──────────────────────────────────────────────────
+model WorkspaceState {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  questionId     String?
+  draftCode      String?
+  language       String   @default("javascript")
+  editorSettings Json?
+  lastSavedAt    DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("workspace_states")
+}
+
+// ─── TODO 3: Question Generation Jobs ────────────────────────────────────────
+model GenerationJob {
+  id          String   @id @default(uuid())
+  status      String   @default("PENDING")
+  type        String
+  topic       String?
+  difficulty  String?
+  count       Int      @default(1)
+  createdBy   String
+  errorMsg    String?
+  resultIds   Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("generation_jobs")
+}
+
+model PrepGuide {
+  id               String   @id @default(uuid())
+  userId           String
+  category         String   // 'Behavioral' or 'Technical'
+  steps            Json     // array of strings
+  completedIndices Json     @default("[]") // array of numbers
+  historyCount     Int      @default(0) // tracks how many history items were used to generate this
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, category])
+}

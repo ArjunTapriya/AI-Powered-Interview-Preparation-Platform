@@ -1,0 +1,100 @@
+{
+  "info": {
+    "name": "Interview Prep Platform API — Analytics",
+    "_postman_id": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+    "description": "Analytics Engine module endpoints for the AI-Powered Interview Preparation Platform.\n\nBase URL: `http://localhost:4000/api`\n\nAll responses use:\n```json\n{ \"success\": true, \"message\": \"\", \"data\": {} }\n```",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000/api"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Analytics Engine",
+      "item": [
+        {
+          "name": "Get Dashboard Summary",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "dashboard"]
+            },
+            "description": "Returns overall average, strongest/weakest skills, and improvement percentages."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Skill Breakdown",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/skills",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "skills"]
+            },
+            "description": "Returns calculated averages across correctness, speed, architecture, and communication."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Trends",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/trends?period=daily",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "trends"],
+              "query": [
+                { "key": "period", "value": "daily", "description": "daily, weekly, or monthly" }
+              ]
+            },
+            "description": "Returns chronological trends of average scores."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Performance Insights",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/insights",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "insights"]
+            },
+            "description": "Returns rule-based generated strengths, weaknesses, and recommendations based on historical data."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

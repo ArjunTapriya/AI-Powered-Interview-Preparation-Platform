@@ -1,0 +1,189 @@
+{
+  "info": {
+    "name": "Interview Prep Platform API",
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "description": "Auth module endpoints for the AI-Powered Interview Preparation Platform.\n\nBase URL: `http://localhost:4000/api`\n\nAll responses use:\n```json\n{ \"success\": true, \"message\": \"\", \"data\": {} }\n```",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000/api"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Signup",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('accessToken', json.data.token.accessToken);",
+                  "  pm.test('Signup successful', () => pm.expect(json.success).to.be.true);",
+                  "  pm.test('Password not in response', () => {",
+                  "    pm.expect(JSON.stringify(json)).to.not.include('password');",
+                  "  });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Arjun Tapriya\",\n  \"email\": \"arjun@example.com\",\n  \"password\": \"SecurePass1!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signup"]
+            },
+            "description": "Register a new user. Password must be 8+ chars with uppercase, lowercase, number, and special character.\n\n**Frontend (AuthLayout.tsx):** Use `data.user` for `setUser()` and `data.token.accessToken` for Authorization header.\n\n**409** — Email already exists\n**400** — Validation error"
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Account created successfully\",\n  \"data\": {\n    \"user\": {\n      \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n      \"name\": \"Arjun Tapriya\",\n      \"email\": \"arjun@example.com\",\n      \"isLoggedIn\": true,\n      \"targetCompany\": \"\",\n      \"roleDepth\": null,\n      \"prepWeeks\": null,\n      \"diagnosticCompleted\": false,\n      \"radarScores\": {\n        \"correctness\": 0,\n        \"speed\": 0,\n        \"architecture\": 0,\n        \"communication\": 0\n      },\n      \"createdAt\": \"2026-06-18T10:00:00.000Z\",\n      \"updatedAt\": \"2026-06-18T10:00:00.000Z\"\n    },\n    \"token\": {\n      \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n      \"tokenType\": \"Bearer\",\n      \"expiresIn\": \"7d\"\n    }\n  }\n}"
+            },
+            {
+              "name": "409 Email Exists",
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Email already exists\",\n  \"data\": null\n}"
+            },
+            {
+              "name": "400 Validation Error",
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Validation failed\",\n  \"data\": {\n    \"formErrors\": [],\n    \"fieldErrors\": {\n      \"password\": [\n        \"Password must contain at least one special character\"\n      ]\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('accessToken', json.data.token.accessToken);",
+                  "  pm.test('Login successful', () => pm.expect(json.success).to.be.true);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"arjun@example.com\",\n  \"password\": \"SecurePass1!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Authenticate existing user.\n\n**Frontend (AuthLayout.tsx):** After success, set `user.isLoggedIn = true` from `data.user`. Route to `onboarding` if `diagnosticCompleted` is false, else `dashboard`.\n\n**401** — Invalid credentials (wrong password)\n**404** — User not found"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Login successful\",\n  \"data\": {\n    \"user\": {\n      \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n      \"name\": \"Arjun Tapriya\",\n      \"email\": \"arjun@example.com\",\n      \"isLoggedIn\": true,\n      \"targetCompany\": \"Google\",\n      \"roleDepth\": \"Senior\",\n      \"prepWeeks\": 6,\n      \"diagnosticCompleted\": false,\n      \"radarScores\": {\n        \"correctness\": 0,\n        \"speed\": 0,\n        \"architecture\": 0,\n        \"communication\": 0\n      },\n      \"createdAt\": \"2026-06-18T10:00:00.000Z\",\n      \"updatedAt\": \"2026-06-18T10:00:00.000Z\"\n    },\n    \"token\": {\n      \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n      \"tokenType\": \"Bearer\",\n      \"expiresIn\": \"7d\"\n    }\n  }\n}"
+            },
+            {
+              "name": "401 Invalid Credentials",
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Invalid credentials\",\n  \"data\": null\n}"
+            },
+            {
+              "name": "404 User Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"message\": \"User not found\",\n  \"data\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "profile"]
+            },
+            "description": "Protected route. Returns authenticated user profile.\n\n**Frontend (OnboardingFlow.tsx):** After onboarding params are saved via Users API (Step 3), call profile to refresh `targetCompany`, `roleDepth`, `prepWeeks`.\n\n**401** — Missing or invalid JWT"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Profile retrieved successfully\",\n  \"data\": {\n    \"user\": {\n      \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n      \"name\": \"Arjun Tapriya\",\n      \"email\": \"arjun@example.com\",\n      \"isLoggedIn\": true,\n      \"targetCompany\": \"Google\",\n      \"roleDepth\": \"Senior\",\n      \"prepWeeks\": 6,\n      \"diagnosticCompleted\": false,\n      \"radarScores\": {\n        \"correctness\": 0,\n        \"speed\": 0,\n        \"architecture\": 0,\n        \"communication\": 0\n      },\n      \"createdAt\": \"2026-06-18T10:00:00.000Z\",\n      \"updatedAt\": \"2026-06-18T10:00:00.000Z\"\n    }\n  }\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Access token is required\",\n  \"data\": null\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

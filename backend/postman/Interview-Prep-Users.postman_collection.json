@@ -1,0 +1,250 @@
+{
+  "info": {
+    "name": "Interview Prep Platform API — Users",
+    "_postman_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+    "description": "Users module endpoints for the AI-Powered Interview Preparation Platform.\n\nBase URL: `http://localhost:4000/api`\n\nAll responses use:\n```json\n{ \"success\": true, \"message\": \"\", \"data\": { \"user\": {} } }\n```\n\n**Prerequisites:**\n1. Run the **Login** request from the Auth collection first.\n2. The `accessToken` collection variable will be set automatically.\n3. Both endpoints here use that token for Bearer auth.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000/api"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('GET /users/me — success', () => pm.expect(json.success).to.be.true);",
+                  "  pm.test('response has user object', () => pm.expect(json.data.user).to.be.an('object'));",
+                  "  pm.test('user has id field', () => pm.expect(json.data.user.id).to.be.a('string'));",
+                  "  pm.test('isLoggedIn is true', () => pm.expect(json.data.user.isLoggedIn).to.be.true);",
+                  "  pm.test('password not exposed', () => {",
+                  "    pm.expect(JSON.stringify(json)).to.not.include('password');",
+                  "  });",
+                  "  pm.test('radarScores shape is correct', () => {",
+                  "    const r = json.data.user.radarScores;",
+                  "    pm.expect(r).to.have.all.keys('correctness', 'speed', 'architecture', 'communication');",
+                  "  });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "me"]
+            },
+            "description": "Protected route. Returns the authenticated user's full profile.\n\n**Frontend integration (AuthLayout.tsx):**\nAfter a successful login, call this endpoint to fetch the full profile from the database and hydrate `AppContext.user` via `setUser(data.user)`.\n\nThe returned shape matches `UserProfile` in `src/store/AppContext.tsx` exactly.\n\n**Routing decision:** If `data.user.diagnosticCompleted === false`, navigate to `onboarding`; otherwise navigate to `dashboard`.\n\n**401** — Missing or expired JWT"
+          },
+          "response": [
+            {
+              "name": "200 OK — Full profile (new user)",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Profile retrieved successfully\",\n  \"data\": {\n    \"user\": {\n      \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n      \"name\": \"Arjun Tapriya\",\n      \"email\": \"arjun@example.com\",\n      \"isLoggedIn\": true,\n      \"targetCompany\": \"\",\n      \"roleDepth\": null,\n      \"prepWeeks\": null,\n      \"diagnosticCompleted\": false,\n      \"radarScores\": {\n        \"correctness\": 0,\n        \"speed\": 0,\n        \"architecture\": 0,\n        \"communication\": 0\n      },\n      \"createdAt\": \"2026-06-18T10:00:00.000Z\",\n      \"updatedAt\": \"2026-06-18T10:00:00.000Z\"\n    }\n  }\n}"
+            },
+            {
+              "name": "200 OK — Full profile (returning user)",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Profile retrieved successfully\",\n  \"data\": {\n    \"user\": {\n      \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n      \"name\": \"Arjun Tapriya\",\n      \"email\": \"arjun@example.com\",\n      \"isLoggedIn\": true,\n      \"targetCompany\": \"Google\",\n      \"roleDepth\": \"Senior\",\n      \"prepWeeks\": 6,\n      \"diagnosticCompleted\": true,\n      \"radarScores\": {\n        \"correctness\": 0,\n        \"speed\": 0,\n        \"architecture\": 0,\n        \"communication\": 0\n      },\n      \"createdAt\": \"2026-06-18T10:00:00.000Z\",\n      \"updatedAt\": \"2026-06-18T10:05:00.000Z\"\n    }\n  }\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Access token is required\",\n  \"data\": null\n}"
+            },
+            {
+              "name": "401 Expired Token",
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Invalid or expired access token\",\n  \"data\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update My Profile — Onboarding Step 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('PUT /users/me — success', () => pm.expect(json.success).to.be.true);",
+                  "  pm.test('targetCompany updated', () => pm.expect(json.data.user.targetCompany).to.equal('Google'));",
+                  "  pm.test('roleDepth updated', () => pm.expect(json.data.user.roleDepth).to.equal('Senior'));",
+                  "  pm.test('prepWeeks updated', () => pm.expect(json.data.user.prepWeeks).to.equal(6));",
+                  "  pm.test('password not exposed', () => {",
+                  "    pm.expect(JSON.stringify(json)).to.not.include('password');",
+                  "  });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetCompany\": \"Google\",\n  \"roleDepth\": \"Senior\",\n  \"prepWeeks\": 6\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "me"]
+            },
+            "description": "Called from **OnboardingFlow.tsx Step 1** when the user clicks 'Next Step'.\n\nPersists `targetCompany`, `roleDepth`, and `prepWeeks` to the database.\n\nOnly sends the fields being updated — all other profile fields are unchanged.\n\n**Immutable fields ignored:** email, password, subscription, createdAt, updatedAt"
+          },
+          "response": [
+            {
+              "name": "200 OK — Step 1 saved",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Profile updated successfully\",\n  \"data\": {\n    \"user\": {\n      \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n      \"name\": \"Arjun Tapriya\",\n      \"email\": \"arjun@example.com\",\n      \"isLoggedIn\": true,\n      \"targetCompany\": \"Google\",\n      \"roleDepth\": \"Senior\",\n      \"prepWeeks\": 6,\n      \"diagnosticCompleted\": false,\n      \"radarScores\": {\n        \"correctness\": 0,\n        \"speed\": 0,\n        \"architecture\": 0,\n        \"communication\": 0\n      },\n      \"createdAt\": \"2026-06-18T10:00:00.000Z\",\n      \"updatedAt\": \"2026-06-18T10:01:00.000Z\"\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update My Profile — Mark Diagnostic Complete",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('PUT /users/me — success', () => pm.expect(json.success).to.be.true);",
+                  "  pm.test('diagnosticCompleted is true', () => pm.expect(json.data.user.diagnosticCompleted).to.be.true);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"diagnosticCompleted\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "me"]
+            },
+            "description": "Called from **OnboardingFlow.tsx Step 3** (after running the diagnostic) or **Step 2** (when the user clicks 'Skip').\n\nSets `diagnosticCompleted: true` in the database so the auth routing check will send the user directly to the dashboard on subsequent logins."
+          },
+          "response": [
+            {
+              "name": "200 OK — Diagnostic marked complete",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Profile updated successfully\",\n  \"data\": {\n    \"user\": {\n      \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n      \"name\": \"Arjun Tapriya\",\n      \"email\": \"arjun@example.com\",\n      \"isLoggedIn\": true,\n      \"targetCompany\": \"Google\",\n      \"roleDepth\": \"Senior\",\n      \"prepWeeks\": 6,\n      \"diagnosticCompleted\": true,\n      \"radarScores\": {\n        \"correctness\": 0,\n        \"speed\": 0,\n        \"architecture\": 0,\n        \"communication\": 0\n      },\n      \"createdAt\": \"2026-06-18T10:00:00.000Z\",\n      \"updatedAt\": \"2026-06-18T10:03:00.000Z\"\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update My Profile — Name Only",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Arjun T.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "me"]
+            },
+            "description": "Partial update — only name is changed. All other fields remain as stored in the database."
+          },
+          "response": []
+        },
+        {
+          "name": "400 Validation — Invalid roleDepth",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleDepth\": \"Lead\",\n  \"prepWeeks\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "me"]
+            },
+            "description": "Demonstrates a 400 Validation Error. `roleDepth: 'Lead'` is not a valid enum value and `prepWeeks: 1` is below the minimum of 2."
+          },
+          "response": [
+            {
+              "name": "400 Validation Error",
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Validation failed\",\n  \"data\": {\n    \"formErrors\": [],\n    \"fieldErrors\": {\n      \"roleDepth\": [\"roleDepth must be Junior, Mid-level, Senior, or Staff/Principal\"],\n      \"prepWeeks\": [\"prepWeeks must be at least 2\"]\n    }\n  }\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

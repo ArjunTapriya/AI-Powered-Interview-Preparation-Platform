@@ -1,0 +1,106 @@
+{
+  "info": {
+    "name": "Interview Prep Platform API — Evaluations",
+    "_postman_id": "e4f5a6b7-c8d9-0123-ef45-678901234567",
+    "description": "Evaluation Reports module endpoints for the AI-Powered Interview Preparation Platform.\n\nBase URL: `http://localhost:4000/api`\n\nAll responses use:\n```json\n{ \"success\": true, \"message\": \"\", \"data\": {} }\n```",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000/api"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "sessionId",
+      "value": ""
+    },
+    {
+      "key": "evaluationId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Evaluation Reports",
+      "item": [
+        {
+          "name": "Create Evaluation Report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('evaluationId', json.data.report.id);",
+                  "  pm.test('POST /evaluations — success', () => pm.expect(json.success).to.be.true);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"correctness\": 85,\n  \"speed\": 78,\n  \"architecture\": 82,\n  \"communication\": 90,\n  \"feedback\": \"Solid understanding of data structures, but missed some edge cases on speed optimization.\",\n  \"strengths\": [\n    \"Clear articulation\",\n    \"Good foundational knowledge\"\n  ],\n  \"weaknesses\": [\n    \"Hesitant on time complexity questions\"\n  ],\n  \"recommendations\": [\n    \"Practice Big-O notation under time constraints\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/evaluations",
+              "host": ["{{baseUrl}}"],
+              "path": ["evaluations"]
+            },
+            "description": "Create a new detailed evaluation report for a session."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Evaluation Report By ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/evaluations/{{evaluationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["evaluations", "{{evaluationId}}"]
+            },
+            "description": "Returns a specific evaluation report."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Session with Report",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/interviews/{{sessionId}}/report",
+              "host": ["{{baseUrl}}"],
+              "path": ["interviews", "{{sessionId}}", "report"]
+            },
+            "description": "Returns the Interview Session with its full Evaluation Report included."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+# Shared cross-cutting layers live under each feature module (SRP).
+# Example: src/modules/auth/auth.controller.ts

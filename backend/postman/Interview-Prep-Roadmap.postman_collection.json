@@ -1,0 +1,115 @@
+{
+  "info": {
+    "name": "Interview Prep Platform API — Roadmap",
+    "_postman_id": "b1a2c3d4-e5f6-7890-abcd-ef1234567890",
+    "description": "Roadmap curriculum catalog and progress tracking endpoints for the AI-Powered Interview Preparation Platform.\n\nBase URL: `http://localhost:4000/api`\n\nAll responses use:\n```json\n{ \"success\": true, \"message\": \"\", \"data\": {} }\n```",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000/api"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "nodeId",
+      "value": "dsa-basics"
+    }
+  ],
+  "item": [
+    {
+      "name": "Roadmap Engine",
+      "item": [
+        {
+          "name": "Get Roadmap Catalog",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/roadmap",
+              "host": ["{{baseUrl}}"],
+              "path": ["roadmap"]
+            },
+            "description": "Retrieve the full list of syllabus roadmap curriculum nodes."
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Progress",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/roadmap/progress",
+              "host": ["{{baseUrl}}"],
+              "path": ["roadmap", "progress"]
+            },
+            "description": "Returns array of roadmap node IDs marked completed by the authenticated user."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Roadmap Progress",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('POST /roadmap/progress — success', () => pm.expect(json.success).to.be.true);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nodeId\": \"{{nodeId}}\",\n  \"completed\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/roadmap/progress",
+              "host": ["{{baseUrl}}"],
+              "path": ["roadmap", "progress"]
+            },
+            "description": "Mark a specific syllabus node as completed or uncompleted for the authenticated user."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Daily Recommendations",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/roadmap/recommendations",
+              "host": ["{{baseUrl}}"],
+              "path": ["roadmap", "recommendations"]
+            },
+            "description": "Returns dynamic challenge recommendations based on user analytical diagnostics."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

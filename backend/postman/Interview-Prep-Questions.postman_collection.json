@@ -1,0 +1,116 @@
+{
+  "info": {
+    "name": "Interview Prep Platform API — Question Bank",
+    "_postman_id": "c9a8b7c6-d5e4-3f2g-1h0j-kl9876543210",
+    "description": "Question Bank module endpoints for the AI-Powered Interview Preparation Platform.\n\nBase URL: `http://localhost:4000/api`\n\nAll responses use:\n```json\n{ \"success\": true, \"message\": \"\", \"data\": {} }\n```",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000/api"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "questionId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Question Bank",
+      "item": [
+        {
+          "name": "Get Questions List (with Filters)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('GET /questions — success', () => pm.expect(json.success).to.be.true);",
+                  "  if (json.data && json.data.questions && json.data.questions.length > 0) {",
+                  "    pm.collectionVariables.set('questionId', json.data.questions[0].id);",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/questions?page=1&limit=10&difficulty=Medium&category=DSA",
+              "host": ["{{baseUrl}}"],
+              "path": ["questions"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "difficulty", "value": "Medium" },
+                { "key": "category", "value": "DSA" }
+              ]
+            },
+            "description": "Get a paginated and filtered list of coding (DSA), system design, or behavioral questions."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Random Question",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/questions/random?difficulty=Easy&category=DSA",
+              "host": ["{{baseUrl}}"],
+              "path": ["questions", "random"],
+              "query": [
+                { "key": "difficulty", "value": "Easy" },
+                { "key": "category", "value": "DSA" }
+              ]
+            },
+            "description": "Get a random question matching filters."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Recommended Question",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/questions/recommended",
+              "host": ["{{baseUrl}}"],
+              "path": ["questions", "recommended"]
+            },
+            "description": "Returns a dynamic recommended challenge tailored to the user's weaknesses and roadmap node milestones."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Question By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/questions/{{questionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["questions", "{{questionId}}"]
+            },
+            "description": "Returns full details of a specific question."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
