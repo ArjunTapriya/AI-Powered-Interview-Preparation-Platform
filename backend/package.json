@@ -11,6 +11,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
+    "db:migrate:rls": "npx tsx apply_rls_migration.ts",
     "postinstall": "prisma generate"
   },
   "keywords": [

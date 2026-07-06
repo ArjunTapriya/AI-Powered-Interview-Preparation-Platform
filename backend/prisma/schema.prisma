@@ -458,7 +458,7 @@ model WorkspaceState {
 
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("workspace_states")
+  @@map("WorkspaceState")
 }
 
 // ─── TODO 3: Question Generation Jobs ────────────────────────────────────────
