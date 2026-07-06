@@ -75,4 +75,7 @@ analyticsRouter.get("/trends", authenticate, asyncHandler(analyticsController.ge
  */
 analyticsRouter.get("/insights", authenticate, asyncHandler(analyticsController.getInsights));
 
+analyticsRouter.post("/activity/heartbeat", authenticate, asyncHandler(analyticsController.logHeartbeat));
+analyticsRouter.get("/activity/weekly", authenticate, asyncHandler(analyticsController.getWeeklyActivity));
+
 export { analyticsRouter };

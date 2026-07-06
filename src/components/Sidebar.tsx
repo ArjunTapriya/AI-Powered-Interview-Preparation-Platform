@@ -72,12 +72,6 @@ export const Sidebar: React.FC = () => {
           <ClipboardList size={18} className={isActive("/notes") ? "text-[var(--accent-orange)]" : ""} /> Notes & Resources
         </button>
 
-        <button
-          onClick={() => navigate("/admin/dashboard")}
-          className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold new-sidebar-item ${location.pathname.startsWith("/admin") ? "active" : ""}`}
-        >
-          <Settings size={18} className={location.pathname.startsWith("/admin") ? "text-[var(--accent-orange)]" : ""} /> Admin Panel
-        </button>
       </nav>
 
       {/* Bottom section */}

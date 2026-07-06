@@ -286,6 +286,21 @@ export class AnalyticsService {
 
     return { strengths, weaknesses, recommendations };
   }
+
+  async logHeartbeat(userId: string, durationSeconds: number, dateStr?: string): Promise<void> {
+    const date = dateStr || new Date().toISOString().split("T")[0];
+    await analyticsRepository.upsertActivity(userId, date, durationSeconds);
+  }
+
+  async getWeeklyActivity(userId: string, dateStrings: string[]): Promise<{ date: string; durationMinutes: number }[]> {
+    const logs = await analyticsRepository.getWeeklyActivity(userId, dateStrings);
+    const logMap = new Map(logs.map(log => [log.date, Math.round(log.durationSeconds / 60)]));
+
+    return dateStrings.map(date => ({
+      date,
+      durationMinutes: logMap.get(date) || 0,
+    }));
+  }
 }
 
 export const analyticsService = new AnalyticsService();

@@ -17,7 +17,6 @@ import { ResumeUpload } from "./features/resume/components/ResumeUpload";
 import { AIFeedback } from "./features/ai-feedback/components/AIFeedback";
 import { NotesResources } from "./features/notes/components/NotesResources";
 import { PricingPage } from "./features/subscription/components/PricingPage";
-import { AdminLayout } from "./features/admin/components/AdminLayout";
 import { QuestionSeriesPage } from "./features/dashboard/components/QuestionSeriesPage";
 
 const AppContent: React.FC = () => {
@@ -90,7 +89,6 @@ const AppContent: React.FC = () => {
                   <Route path="/notes" element={<NotesResources />} />
                   <Route path="/resume" element={<ResumeUpload />} />
                   <Route path="/series/:seriesId" element={<QuestionSeriesPage />} />
-                  <Route path="/admin/*" element={<AdminLayout />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Routes>

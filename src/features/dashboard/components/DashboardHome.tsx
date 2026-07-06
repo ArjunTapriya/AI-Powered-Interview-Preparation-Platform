@@ -117,13 +117,83 @@ const RadarChart: React.FC<{ metrics: EvaluationMetrics }> = ({ metrics }) => {
   );
 };
 
+const getCurrentWeekDates = () => {
+  const dates = [];
+  const today = new Date();
+  const day = today.getDay();
+  const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(today.setDate(diff));
+  
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    dates.push(d.toISOString().split("T")[0]);
+  }
+  return dates;
+};
+
 export const DashboardHome: React.FC = () => {
   const navigate = useNavigate();
-  const { user, streak, history, accessToken, recommendation, fetchRecommendations, pingStreak, prepGuidesCache } = useApp() as any;
+  const { user, streak, history, accessToken, recommendation, fetchRecommendations, pingStreak, prepGuidesCache, setCurrentEvaluationId } = useApp() as any;
 
   const [averages, setAverages] = useState<EvaluationMetrics>(user.radarScores);
   const [lowestMetricName, setLowestMetricName] = useState<string>("correctness");
   const [activityLog, setActivityLog] = useState<number[]>([]);
+
+  const currentWeekDates = useMemo(() => getCurrentWeekDates(), []);
+
+  const { data: weeklyActivityData } = useQuery({
+    queryKey: ["analytics", "weeklyActivity", currentWeekDates],
+    queryFn: async () => {
+      if (!accessToken) return null;
+      const res = await apiFetch(`/analytics/activity/weekly?dates=${currentWeekDates.join(",")}`);
+      return res.json();
+    },
+    enabled: !!accessToken,
+    refetchInterval: 30000,
+  });
+
+  const weeklyDurations = useMemo(() => {
+    const list = [0, 0, 0, 0, 0, 0, 0];
+    if (weeklyActivityData?.success && weeklyActivityData.data?.activity) {
+      const activityList = weeklyActivityData.data.activity;
+      currentWeekDates.forEach((date, index) => {
+        const match = activityList.find((a: any) => a.date === date);
+        if (match) {
+          list[index] = match.durationMinutes;
+        }
+      });
+    }
+    return list;
+  }, [weeklyActivityData, currentWeekDates]);
+
+  const chartConfig = useMemo(() => {
+    const maxVal = Math.max(...weeklyDurations);
+    let limit = 60;
+    let topLabel = "1h";
+    let midLabel = "30m";
+
+    if (maxVal <= 60) {
+      limit = 60;
+      topLabel = "1h";
+      midLabel = "30m";
+    } else if (maxVal <= 120) {
+      limit = 120;
+      topLabel = "2h";
+      midLabel = "1h";
+    } else {
+      const hours = Math.ceil(maxVal / 60);
+      limit = hours * 60;
+      topLabel = `${hours}h`;
+      if (hours % 2 === 0) {
+        midLabel = `${hours / 2}h`;
+      } else {
+        midLabel = `${(hours / 2).toFixed(1)}h`;
+      }
+    }
+
+    return { limit, topLabel, midLabel };
+  }, [weeklyDurations]);
 
   const { data: skillsData } = useQuery({
     queryKey: ["analytics", "skills", history],
@@ -479,19 +549,28 @@ export const DashboardHome: React.FC = () => {
               <option>This Week</option>
             </select>
           </div>
-          <div className="flex-1 flex items-end justify-between gap-1 mt-2 relative z-10 pl-4 pb-4">
+          <div className="flex-1 flex items-end justify-between gap-1 mt-2 relative z-10 pl-5 pb-4">
             <div className="absolute left-0 top-0 bottom-4 flex flex-col justify-between text-[9px] text-[var(--text-secondary-new)]">
-              <span>2h</span>
-              <span>1h</span>
+              <span>{chartConfig.topLabel}</span>
+              <span>{chartConfig.midLabel}</span>
               <span>0</span>
             </div>
-            {/* Mock bar chart matching image */}
+            {/* Dynamic weekly activity bar chart */}
             {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => {
-              const heights = ['20%', '80%', '40%', '30%', '70%', '45%', '85%'];
+              const duration = weeklyDurations[i];
+              const heightPercent = Math.min(100, Math.round((duration / chartConfig.limit) * 100)) + "%";
+              const hours = Math.floor(duration / 60);
+              const mins = duration % 60;
+              const tooltip = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+
               return (
-                <div key={day} className="flex flex-col items-center gap-2 flex-1 group">
-                  <div className="w-full max-w-[12px] h-[100px] flex items-end">
-                    <div className="w-full bg-gradient-to-t from-[var(--accent-purple)] to-[#A78BFA] rounded-t-sm opacity-80 group-hover:opacity-100 transition-opacity" style={{ height: heights[i] }} />
+                <div key={day} className="flex flex-col items-center gap-2 flex-1 group" title={tooltip}>
+                  <div className="w-full max-w-[12px] h-[100px] flex items-end relative">
+                    {/* Tooltip on hover */}
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-1.5 py-0.5 bg-gray-900 border border-white/10 text-[8px] text-white rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-20">
+                      {tooltip}
+                    </div>
+                    <div className="w-full bg-gradient-to-t from-[var(--accent-purple)] to-[#A78BFA] rounded-t-sm opacity-80 group-hover:opacity-100 transition-opacity" style={{ height: heightPercent }} />
                   </div>
                   <span className="text-[9px] text-[var(--text-secondary-new)]">{day}</span>
                 </div>
@@ -502,24 +581,50 @@ export const DashboardHome: React.FC = () => {
 
         {/* Recent Achievements mapped from History */}
         <div className="new-card p-5 flex flex-col">
-          <h3 className="text-[14px] font-bold text-white flex items-center gap-2 mb-5">
-            <Award size={16} className="text-[var(--accent-orange)]" /> Recent Achievements
-          </h3>
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="text-[14px] font-bold text-white flex items-center gap-2">
+              <Award size={16} className="text-[var(--accent-orange)]" /> Recent Achievements
+            </h3>
+            <button
+              onClick={() => {
+                if (setCurrentEvaluationId) setCurrentEvaluationId(null);
+                navigate("/evaluation");
+              }}
+              className="text-[10px] text-[var(--text-secondary-new)] hover:text-white flex items-center gap-1 transition-colors"
+            >
+              All Reports <ChevronRight size={12} />
+            </button>
+          </div>
           <div className="flex flex-col gap-4 flex-1 overflow-y-auto custom-scrollbar-new">
-            {history && history.length > 0 ? history.slice(0, 3).map((session: any, i: number) => (
-              <div key={i} className="flex items-center gap-3 group cursor-pointer" onClick={() => navigate("/evaluation")}>
-                <div className="w-8 h-8 rounded-lg bg-[rgba(255,255,255,0.03)] border border-[var(--surface-border-new)] flex items-center justify-center shrink-0 group-hover:bg-[var(--accent-orange)]/10 transition-colors">
-                  <CheckCircle2 size={14} className="text-gray-400 group-hover:text-[var(--accent-orange)]" />
+            {history && history.length > 0 ? history.slice(0, 3).map((session: any, i: number) => {
+              const score = session.overallScore !== undefined ? session.overallScore : (session.score !== undefined ? session.score : 0);
+              const duration = session.durationMin !== undefined ? session.durationMin : (session.duration !== undefined ? session.duration : 0);
+              const dateObj = new Date(session.createdAt || session.date);
+
+              return (
+                <div 
+                  key={session.id || i} 
+                  className="flex items-center gap-3 group cursor-pointer" 
+                  onClick={() => {
+                    if (setCurrentEvaluationId) setCurrentEvaluationId(session.id);
+                    navigate("/evaluation");
+                  }}
+                >
+                  <div className="w-8 h-8 rounded-lg bg-[rgba(255,255,255,0.03)] border border-[var(--surface-border-new)] flex items-center justify-center shrink-0 group-hover:bg-[var(--accent-orange)]/10 transition-colors">
+                    <CheckCircle2 size={14} className="text-gray-400 group-hover:text-[var(--accent-orange)]" />
+                  </div>
+                  <div className="flex-1 overflow-hidden">
+                    <h5 className="text-[11px] font-bold text-white truncate">
+                      {session.company || "Uploaded Resume Practice"} {session.interviewType || session.role || ""}
+                    </h5>
+                    <p className="text-[10px] text-[var(--text-secondary-new)] truncate">Score: {score}% • {duration} min</p>
+                  </div>
+                  <span className="text-[9px] text-[var(--text-secondary-new)] shrink-0">
+                    {dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                  </span>
                 </div>
-                <div className="flex-1 overflow-hidden">
-                  <h5 className="text-[11px] font-bold text-white truncate">{session.company} {session.role}</h5>
-                  <p className="text-[10px] text-[var(--text-secondary-new)] truncate">Score: {session.score}% • {session.duration} min</p>
-                </div>
-                <span className="text-[9px] text-[var(--text-secondary-new)] shrink-0">
-                  {new Date(session.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                </span>
-              </div>
-            )) : (
+              );
+            }) : (
               <>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-[rgba(249,115,22,0.1)] border border-[var(--accent-orange)]/20 flex items-center justify-center shrink-0">

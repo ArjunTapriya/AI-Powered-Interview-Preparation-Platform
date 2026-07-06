@@ -1,8 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { authService } from "./auth.service";
-import { usersRepository } from "../users/users.repository";
 import { authRefreshRepository } from "./auth.refresh.repository";
-import { UnauthorizedError } from "../../utils/AppError";
 
 vi.mock("../users/users.repository", () => ({
   usersRepository: {

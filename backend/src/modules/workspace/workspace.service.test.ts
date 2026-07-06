@@ -52,7 +52,7 @@ describe("WorkspaceService", () => {
       const input = {
         questionId: "q-2",
         draftCode: "function solve() {}",
-        language: "python",
+        language: "python" as const,
       };
 
       const mockSavedState = {

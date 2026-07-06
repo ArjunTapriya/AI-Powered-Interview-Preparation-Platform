@@ -39,6 +39,7 @@ model User {
   conversations      Conversation[]
   refreshTokens      RefreshToken[]
   workspaceState     WorkspaceState?
+  activityLogs       ActivityLog[]
 }
 
 enum Role {
@@ -490,4 +491,18 @@ model PrepGuide {
 
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@unique([userId, category])
+}
+
+model ActivityLog {
+  id              String   @id @default(uuid())
+  userId          String
+  date            String   // YYYY-MM-DD format (representing user's local date)
+  durationSeconds Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@map("activity_logs")
 }

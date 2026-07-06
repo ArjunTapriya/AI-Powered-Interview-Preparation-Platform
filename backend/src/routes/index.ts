@@ -12,7 +12,6 @@ import { aiRouter } from "../modules/ai/ai.routes";
 import { resumesRouter } from "../modules/resumes/resume.routes";
 import { subscriptionRouter } from "../modules/subscriptions/subscription.routes";
 import { mentorRoutes } from "../modules/ai/mentor.routes";
-import { adminRoutes } from "../modules/admin/admin.routes";
 // New modules (TODO 1, 2, 3)
 import { voiceRouter } from "../modules/voice/voice.routes";
 import { workspaceRouter } from "../modules/workspace/workspace.routes";
@@ -37,7 +36,6 @@ export function createApiRouter(): Router {
   router.use("/mentor", mentorRoutes);
   router.use("/resumes", resumesRouter);
   router.use("/subscriptions", subscriptionRouter);
-  router.use("/admin", adminRoutes);
   // TODO 1: Voice Interview
   router.use("/voice", voiceRouter);
   // TODO 2: Workspace Persistence

@@ -12,17 +12,28 @@ import {
   MessageSquare,
   Award,
   ArrowLeft,
-  TrendingUp
+  TrendingUp,
+  ChevronRight
 } from "lucide-react";
 
 export const EvaluationReport: React.FC = () => {
   const navigate = useNavigate();
-  const { currentEvaluation, currentEvaluationId, setCurrentEvaluation, accessToken } = useApp() as any;
+  const { currentEvaluation, currentEvaluationId, setCurrentEvaluation, setCurrentEvaluationId, history, accessToken } = useApp() as any;
 
+  // All hook declarations first (Unconditional)
   const [localSession, setLocalSession] = useState<InterviewSession | null>(currentEvaluation);
   const [loading, setLoading] = useState(!currentEvaluation && !!currentEvaluationId);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTimeSec, setCurrentTimeSec] = useState(0);
+  const [activeDiffLine, setActiveDiffLine] = useState<number | null>(null);
+  const playInterval = useRef<any>(null);
 
   useEffect(() => {
+    if (!currentEvaluationId) {
+      setLocalSession(null);
+      setLoading(false);
+      return;
+    }
     // If we have an ID but no currentEvaluation loaded (e.g. after refresh), fetch it
     if (currentEvaluationId && accessToken) {
       setLoading(true);
@@ -50,7 +61,120 @@ export const EvaluationReport: React.FC = () => {
     }
   }, [currentEvaluationId, accessToken]);
 
-  // If no evaluation session, provide fallback
+  // Audio Playback scrubber logic
+  const maxTimeSec = 120; // 2 mins simulation
+  useEffect(() => {
+    if (isPlaying) {
+      playInterval.current = setInterval(() => {
+        setCurrentTimeSec((prev) => {
+          if (prev >= maxTimeSec) {
+            setIsPlaying(false);
+            clearInterval(playInterval.current);
+            return 0;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    } else {
+      if (playInterval.current) clearInterval(playInterval.current);
+    }
+    return () => {
+      if (playInterval.current) clearInterval(playInterval.current);
+    };
+  }, [isPlaying]);
+
+  // Conditional early returns (after all hooks run)
+  if (loading) {
+    return <div className="text-center py-20 text-gray-400 font-mono animate-pulse">Loading report from PostgreSQL...</div>;
+  }
+
+  // If no report ID is selected, show the history list representation
+  if (!currentEvaluationId) {
+    return (
+      <div className="space-y-8 animate-fadeIn max-w-5xl mx-auto px-4 py-6 text-left">
+        <div className="flex items-center justify-between border-b border-surface-border pb-6">
+          <div>
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="text-xs text-gray-400 hover:text-[var(--accent-primary)] font-mono flex items-center gap-1.5 transition-colors mb-2"
+            >
+              <ArrowLeft size={14} /> Back to Command Center
+            </button>
+            <h1 className="text-3xl font-extrabold text-white leading-tight font-sans tracking-tight m-0 font-display">
+              Evaluation History
+            </h1>
+            <p className="text-gray-400 mt-1 text-sm">
+              Review all your completed mock interviews and coding diagnostic reports.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4">
+          {history && history.length > 0 ? (
+            history.map((session: any, idx: number) => {
+              const score = session.overallScore !== undefined ? session.overallScore : (session.score !== undefined ? session.score : 0);
+              const duration = session.durationMin !== undefined ? session.durationMin : (session.duration !== undefined ? session.duration : 0);
+              const dateStr = new Date(session.createdAt || session.date).toLocaleDateString(undefined, {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              });
+
+              return (
+                <Card
+                  key={session.id || idx}
+                  onClick={() => {
+                    if (setCurrentEvaluationId) setCurrentEvaluationId(session.id);
+                  }}
+                  className="flex flex-col md:flex-row md:items-center justify-between p-6 bg-surface-solid border-surface-border hover:border-[var(--accent-primary)]/40 hover:bg-white/5 transition-all cursor-pointer group"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <span className="px-2.5 py-1 rounded bg-[rgba(var(--accent-rgb),0.1)] text-[var(--accent-primary)] border border-[rgba(var(--accent-rgb),0.2)] text-[10px] font-bold uppercase tracking-wider">
+                        {session.interviewType || session.type || "Practice"}
+                      </span>
+                      <span className="text-[11px] text-gray-400 font-mono">
+                        {dateStr}
+                      </span>
+                    </div>
+                    <h3 className="text-lg font-bold text-white group-hover:text-[var(--accent-primary)] transition-colors">
+                      {session.company || "Uploaded Resume Practice"}
+                    </h3>
+                    <p className="text-xs text-gray-400">
+                      Duration: {duration} min
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-6 mt-4 md:mt-0">
+                    <div className="text-right">
+                      <span className="text-2xl font-extrabold text-white font-mono">
+                        {score}
+                      </span>
+                      <span className="text-gray-500 text-xs"> / 100</span>
+                      <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Overall Score</p>
+                    </div>
+
+                    <div className="p-2 rounded-lg bg-white/5 border border-white/5 group-hover:bg-[var(--accent-primary)]/10 group-hover:border-[var(--accent-primary)]/20 transition-colors">
+                      <ChevronRight size={18} className="text-gray-400 group-hover:text-[var(--accent-primary)] transition-colors" />
+                    </div>
+                  </div>
+                </Card>
+              );
+            })
+          ) : (
+            <div className="text-center py-20 bg-surface-solid border border-surface-border rounded-xl">
+              <p className="text-gray-500 text-sm font-mono mb-4">No evaluation reports found in the database.</p>
+              <Button onClick={() => navigate("/interview-practice")} variant="primary">
+                Take a Mock Interview
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // If report ID is selected, calculate and render scorecard details
   const session: InterviewSession = localSession || currentEvaluation || {
     id: "session-fallback",
     company: "Google",
@@ -77,38 +201,6 @@ export const EvaluationReport: React.FC = () => {
     ]
   };
 
-  if (loading) {
-    return <div className="text-center py-20 text-gray-400 font-mono animate-pulse">Loading report from PostgreSQL...</div>;
-  }
-
-  // State Management
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTimeSec, setCurrentTimeSec] = useState(0);
-  const [activeDiffLine, setActiveDiffLine] = useState<number | null>(null);
-  const playInterval = useRef<any>(null);
-
-  // Audio Playback scrubber logic
-  const maxTimeSec = 120; // 2 mins simulation
-  useEffect(() => {
-    if (isPlaying) {
-      playInterval.current = setInterval(() => {
-        setCurrentTimeSec((prev) => {
-          if (prev >= maxTimeSec) {
-            setIsPlaying(false);
-            clearInterval(playInterval.current);
-            return 0;
-          }
-          return prev + 1;
-        });
-      }, 1000);
-    } else {
-      if (playInterval.current) clearInterval(playInterval.current);
-    }
-    return () => {
-      if (playInterval.current) clearInterval(playInterval.current);
-    };
-  }, [isPlaying]);
-
   const formatSec = (totalSec: number) => {
     const m = Math.floor(totalSec / 60);
     const s = totalSec % 60;
@@ -117,7 +209,7 @@ export const EvaluationReport: React.FC = () => {
 
   // Click transcript block to jump
   const handleTranscriptClick = (timeStr: string) => {
-    const [m, s] = timeStr.split(":").map(Number);
+    const [m, s] = (timeStr || "0:00").split(":").map(Number);
     const targetSec = m * 60 + s;
     setCurrentTimeSec(targetSec);
     setIsPlaying(true);
@@ -128,7 +220,7 @@ export const EvaluationReport: React.FC = () => {
     if (!session.transcript) return -1;
     // Map timestamps
     const secondsArray = session.transcript.map((item) => {
-      const [m, s] = item.timestamp.split(":").map(Number);
+      const [m, s] = (item?.timestamp || "0:00").split(":").map(Number);
       return m * 60 + s;
     });
 
@@ -149,10 +241,16 @@ export const EvaluationReport: React.FC = () => {
       <div className="flex items-center gap-3 justify-between border-b border-surface-border pb-6">
         <div>
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => {
+              if (setCurrentEvaluationId) {
+                setCurrentEvaluationId(null);
+              } else {
+                navigate("/dashboard");
+              }
+            }}
             className="text-xs text-gray-400 hover:text-[var(--accent-primary)] font-mono flex items-center gap-1.5 transition-colors mb-2"
           >
-            <ArrowLeft size={14} /> Back to Command Center
+            <ArrowLeft size={14} /> Back to Reports History
           </button>
           <h1 className="text-3xl font-extrabold text-white leading-tight font-sans tracking-tight m-0">
             Performance Review

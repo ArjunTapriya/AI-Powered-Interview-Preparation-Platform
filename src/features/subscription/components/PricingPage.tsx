@@ -172,7 +172,7 @@ export const PricingPage: React.FC = () => {
         </Card>
 
         {/* Pro Tier */}
-        <Card className="relative flex flex-col p-8 border-[var(--accent-primary)]/50 bg-[rgba(var(--accent-rgb),0.02)] transform scale-105 shadow-[0_0_40px_rgba(var(--accent-rgb),0.15)] z-10">
+        <Card overflowHidden={false} className="relative flex flex-col p-8 border-[var(--accent-primary)]/50 bg-[rgba(var(--accent-rgb),0.02)] transform scale-105 shadow-[0_0_40px_rgba(var(--accent-rgb),0.15)] z-10">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[var(--accent-primary)] text-[var(--bg-color)] px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-1">
             <Zap size={14} className="fill-current" /> Most Popular
           </div>

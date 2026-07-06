@@ -1,4 +1,4 @@
-import { EvaluationReport, InterviewSession } from "@prisma/client";
+import { EvaluationReport, InterviewSession, ActivityLog } from "@prisma/client";
 import { prisma } from "../../config/database";
 
 export class AnalyticsRepository {
@@ -28,6 +28,7 @@ export class AnalyticsRepository {
       orderBy: { createdAt: "desc" },
     });
   }
+  
   async getUserQuestionAttempts(userId: string) {
     return prisma.questionAttemptHistory.findMany({
       where: { userId },
@@ -42,6 +43,38 @@ export class AnalyticsRepository {
         status: "ACCEPTED"
       },
       orderBy: { createdAt: "desc" },
+    });
+  }
+
+  async upsertActivity(userId: string, date: string, durationSeconds: number): Promise<ActivityLog> {
+    return prisma.activityLog.upsert({
+      where: {
+        userId_date: {
+          userId,
+          date,
+        },
+      },
+      update: {
+        durationSeconds: {
+          increment: durationSeconds,
+        },
+      },
+      create: {
+        userId,
+        date,
+        durationSeconds,
+      },
+    });
+  }
+
+  async getWeeklyActivity(userId: string, dateStrings: string[]): Promise<ActivityLog[]> {
+    return prisma.activityLog.findMany({
+      where: {
+        userId,
+        date: {
+          in: dateStrings,
+        },
+      },
     });
   }
 }

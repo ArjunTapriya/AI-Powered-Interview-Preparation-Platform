@@ -441,6 +441,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem("interview_prep_streak", streak.toString());
   }, [streak]);
 
+  // Global active duration tracking heartbeat (every 30 seconds)
+  useEffect(() => {
+    if (!accessToken || !user.isLoggedIn) return;
+
+    const sendHeartbeat = async () => {
+      try {
+        await apiFetch("/analytics/activity/heartbeat", {
+          method: "POST",
+          body: JSON.stringify({ durationSeconds: 30 })
+        });
+      } catch (err) {
+        console.error("Failed to send active activity heartbeat:", err);
+      }
+    };
+
+    // Trigger initial heartbeat
+    sendHeartbeat();
+
+    const interval = setInterval(sendHeartbeat, 30000);
+    return () => clearInterval(interval);
+  }, [accessToken, user.isLoggedIn]);
+
   useEffect(() => {
     localStorage.setItem("interview_prep_history", JSON.stringify(history));
   }, [history]);
