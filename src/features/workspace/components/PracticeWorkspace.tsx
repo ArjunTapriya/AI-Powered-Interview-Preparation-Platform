@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp, type InterviewSession } from "../../../store/AppContext";
+import { apiFetch } from "../../../utils/apiFetch";
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
 import {
@@ -180,12 +181,8 @@ export const PracticeWorkspace: React.FC = () => {
     setConsoleOutput(["Compiling files and running code in the Judge0 sandbox..."]);
 
     try {
-      const response = await fetch("http://localhost:4000/api/code/run", {
+      const response = await apiFetch("/code/run", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
         body: JSON.stringify({
           language,
           sourceCode: code,
@@ -248,12 +245,8 @@ export const PracticeWorkspace: React.FC = () => {
     setConsoleOutput(["Running test cases and validating overall solution constraints..."]);
 
     try {
-      const response = await fetch(`http://localhost:4000/api/code/submit/${challenge.id}`, {
+      const response = await apiFetch(`/code/submit/${challenge.id}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
         body: JSON.stringify({
           language,
           sourceCode: code,
@@ -466,12 +459,8 @@ export const PracticeWorkspace: React.FC = () => {
 
     // Submit to backend if logged in
     if (accessToken) {
-      fetch("http://localhost:4000/api/interviews", {
+      apiFetch("/interviews", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
         body: JSON.stringify(newSession),
       })
       .then(res => res.json())
@@ -868,14 +857,10 @@ export const PracticeWorkspace: React.FC = () => {
                   { speaker: "Candidate", text: userText, time: newTimestamp }
                 ]);
                 // Real AI Mentor Integration
-                const fetchMentorResponse = async (textToSend: string, endpoint: string = '/api/mentor/chat') => {
+                const fetchMentorResponse = async (textToSend: string, endpoint: string = '/mentor/chat') => {
                   try {
-                    const res = await fetch(`http://localhost:5000${endpoint}`, {
+                    const res = await apiFetch(endpoint, {
                       method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${accessToken}`,
-                      },
                       body: JSON.stringify({
                         interviewSessionId: "active-session", // In reality, fetch from context
                         questionId: challenge.id,
@@ -897,7 +882,7 @@ export const PracticeWorkspace: React.FC = () => {
                   }
                 };
 
-                fetchMentorResponse(userText, '/api/mentor/chat');
+                fetchMentorResponse(userText, '/mentor/chat');
 
                 form.reset();
               }}
@@ -921,9 +906,8 @@ export const PracticeWorkspace: React.FC = () => {
                   // Wrap in async IIFE or create a method
                   (async () => {
                     try {
-                      const res = await fetch(`http://localhost:5000/api/mentor/hint`, {
+                      const res = await apiFetch(`/mentor/hint`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
                         body: JSON.stringify({ interviewSessionId: "active-session", questionId: challenge.id, currentCode: codeMap[language] || code, message: "I need a hint" })
                       });
                       const data = await res.json();
@@ -942,9 +926,8 @@ export const PracticeWorkspace: React.FC = () => {
                   setChatLog((prev) => [...prev, { speaker: "Candidate", text: "Can you debug this?", time: formatTime(timeLeft) }]);
                   (async () => {
                     try {
-                      const res = await fetch(`http://localhost:5000/api/mentor/debug`, {
+                      const res = await apiFetch(`/mentor/debug`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
                         body: JSON.stringify({ interviewSessionId: "active-session", questionId: challenge.id, currentCode: codeMap[language] || code, message: "Debug" })
                       });
                       const data = await res.json();
@@ -963,9 +946,8 @@ export const PracticeWorkspace: React.FC = () => {
                   setChatLog((prev) => [...prev, { speaker: "Candidate", text: "Analyze complexity", time: formatTime(timeLeft) }]);
                   (async () => {
                     try {
-                      const res = await fetch(`http://localhost:5000/api/mentor/complexity`, {
+                      const res = await apiFetch(`/mentor/complexity`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
                         body: JSON.stringify({ interviewSessionId: "active-session", questionId: challenge.id, currentCode: codeMap[language] || code, message: "Complexity" })
                       });
                       const data = await res.json();

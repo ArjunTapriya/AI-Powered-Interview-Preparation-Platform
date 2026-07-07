@@ -160,7 +160,38 @@ export const DashboardHome: React.FC = () => {
     };
   }, [history, user]);
 
-  const [averages, setAverages] = useState<EvaluationMetrics>(user.radarScores);
+  const averages = useMemo<EvaluationMetrics>(() => {
+    if (history && history.length > 0) {
+      let c = 0, s = 0, a = 0, comm = 0;
+      history.forEach((session: any) => {
+        const metrics = session.metrics || {};
+        c += metrics.correctness !== undefined ? metrics.correctness : 0;
+        s += metrics.speed !== undefined ? metrics.speed : 0;
+        a += metrics.architecture !== undefined ? metrics.architecture : 0;
+        comm += metrics.communication !== undefined ? metrics.communication : 0;
+      });
+      const len = history.length;
+      return {
+        correctness: Math.round(c / len),
+        speed: Math.round(s / len),
+        architecture: Math.round(a / len),
+        communication: Math.round(comm / len),
+      };
+    }
+
+    const uRadar = user?.radarScores;
+    if (uRadar && (uRadar.correctness > 0 || uRadar.speed > 0 || uRadar.architecture > 0 || uRadar.communication > 0)) {
+      return uRadar;
+    }
+
+    return {
+      correctness: 75,
+      speed: 65,
+      architecture: 70,
+      communication: 60,
+    };
+  }, [history, user]);
+
   const [lowestMetricName, setLowestMetricName] = useState<string>("correctness");
   const [activityLog, setActivityLog] = useState<number[]>([]);
 
@@ -249,14 +280,7 @@ export const DashboardHome: React.FC = () => {
     enabled: !!accessToken,
   });
 
-  useEffect(() => {
-    if (skillsData?.success && skillsData.data?.skills) {
-      const s = skillsData.data.skills;
-      if (s.correctness > 0 || s.speed > 0 || s.architecture > 0 || s.communication > 0) {
-        setAverages(s);
-      }
-    }
-  }, [skillsData]);
+
 
   useEffect(() => {
     if (dashboardData?.success && dashboardData.data?.summary) {

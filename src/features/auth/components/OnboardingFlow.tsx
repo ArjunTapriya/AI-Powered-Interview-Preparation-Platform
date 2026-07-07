@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../../../store/AppContext";
+import { apiFetch } from "../../../utils/apiFetch";
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
 import { ProgressBar } from "../../../components/ui/ProgressBar";
@@ -34,12 +35,8 @@ export const OnboardingFlow: React.FC = () => {
 
   const updateUserProfile = async (data: any) => {
     try {
-      const res = await fetch("http://localhost:4000/api/users/me", {
+      const res = await apiFetch("/users/me", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
         body: JSON.stringify(data),
       });
       const json = await res.json();

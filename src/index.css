@@ -217,3 +217,105 @@
   color: #111827 !important;
   border-color: rgba(0, 0, 0, 0.15) !important;
 }
+
+/* Premium Prose Markdown styling */
+.prose {
+  font-family: inherit;
+}
+.prose p {
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+}
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  color: #ffffff;
+  font-weight: 700;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+.prose h1 { font-size: 1.25rem; }
+.prose h2 { font-size: 1.15rem; }
+.prose h3 { font-size: 1.05rem; }
+.prose ul, .prose ol {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding-left: 1.25rem;
+}
+.prose ul {
+  list-style-type: disc;
+}
+.prose ol {
+  list-style-type: decimal;
+}
+.prose li {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+.prose strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+.prose code {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  padding: 0.125rem 0.25rem;
+  font-family: monospace;
+  font-size: 0.85em;
+  color: var(--accent-primary);
+}
+.prose pre {
+  background: #09090b;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 0.75rem;
+  overflow-x: auto;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.prose pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #e4e4e7;
+  font-size: 0.9em;
+}
+.prose blockquote {
+  border-left: 3px solid var(--accent-primary);
+  padding-left: 0.75rem;
+  color: #a1a1aa;
+  font-style: italic;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.prose th, .prose td {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+.prose th {
+  background: rgba(255, 255, 255, 0.02);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.light .prose h1, .light .prose h2, .light .prose h3, .light .prose h4, .light .prose strong {
+  color: #111827 !important;
+}
+.light .prose code {
+  background: rgba(0, 0, 0, 0.05);
+  color: #ea580c;
+}
+.light .prose pre {
+  background: #f4f4f5;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+.light .prose pre code {
+  color: #27272a;
+}

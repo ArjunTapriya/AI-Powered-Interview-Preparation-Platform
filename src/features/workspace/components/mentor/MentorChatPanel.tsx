@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { apiFetch } from '../../../../utils/apiFetch';
 
 interface MentorChatPanelProps {
   interviewSessionId: string;
@@ -15,11 +16,11 @@ export const MentorChatPanel: React.FC<MentorChatPanelProps> = ({
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const sendMessage = async (overrideMessage?: string, endpoint: string = '/api/mentor/chat') => {
+  const sendMessage = async (overrideMessage?: string, endpoint: string = '/mentor/chat') => {
     const textToSend = overrideMessage || input;
-    if (!textToSend.trim() && endpoint === '/api/mentor/chat') return;
+    if (!textToSend.trim() && endpoint === '/mentor/chat') return;
 
-    if (endpoint === '/api/mentor/chat') {
+    if (endpoint === '/mentor/chat') {
       setMessages((prev) => [...prev, { role: 'user', content: textToSend }]);
       setInput('');
     } else {
@@ -34,12 +35,8 @@ export const MentorChatPanel: React.FC<MentorChatPanelProps> = ({
 
     try {
       // In a real implementation, this connects to the AI backend
-      const res = await fetch(endpoint, {
+      const res = await apiFetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
         body: JSON.stringify({
           interviewSessionId,
           questionId,
@@ -79,21 +76,21 @@ export const MentorChatPanel: React.FC<MentorChatPanelProps> = ({
 
       <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
         <button
-          onClick={() => sendMessage(undefined, '/api/mentor/hint')}
+          onClick={() => sendMessage(undefined, '/mentor/hint')}
           disabled={loading}
           className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded-full whitespace-nowrap transition-colors"
         >
           💡 Get Hint
         </button>
         <button
-          onClick={() => sendMessage(undefined, '/api/mentor/debug')}
+          onClick={() => sendMessage(undefined, '/mentor/debug')}
           disabled={loading}
           className="text-xs bg-rose-600 hover:bg-rose-500 text-white px-3 py-1 rounded-full whitespace-nowrap transition-colors"
         >
           🐛 Debug Code
         </button>
         <button
-          onClick={() => sendMessage(undefined, '/api/mentor/complexity')}
+          onClick={() => sendMessage(undefined, '/mentor/complexity')}
           disabled={loading}
           className="text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded-full whitespace-nowrap transition-colors"
         >

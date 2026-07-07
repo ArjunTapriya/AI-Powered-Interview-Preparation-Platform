@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../../../store/AppContext";
+import { apiFetch } from "../../../utils/apiFetch";
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
 import { Check, Zap, Crown, Shield, ArrowRight } from "lucide-react";
@@ -39,12 +40,8 @@ export const PricingPage: React.FC = () => {
 
     try {
       // 1. Create order on backend
-      const orderRes = await fetch("http://localhost:4000/api/subscriptions/create-order", {
+      const orderRes = await apiFetch("/subscriptions/create-order", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
         body: JSON.stringify({ tier }),
       });
 
@@ -64,20 +61,16 @@ export const PricingPage: React.FC = () => {
         description: `Upgrade to ${tier} Plan`,
         order_id: order_id,
         handler: async function (response: any) {
-          // 3. Verify Payment
-          try {
-            const verifyRes = await fetch("http://localhost:4000/api/subscriptions/verify-payment", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${accessToken}`,
-              },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-              }),
-            });
+            // 3. Verify Payment
+            try {
+              const verifyRes = await apiFetch("/subscriptions/verify-payment", {
+                method: "POST",
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                }),
+              });
 
             const verifyData = await verifyRes.json();
             if (verifyData.success) {

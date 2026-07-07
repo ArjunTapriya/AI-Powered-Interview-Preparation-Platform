@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useApp } from "../../../store/AppContext";
+import { apiFetch } from "../../../utils/apiFetch";
 import { Button } from "../../../components/ui/Button";
 
 import { ProgressBar } from "../../../components/ui/ProgressBar";
@@ -34,9 +35,7 @@ export const ResumeUpload: React.FC = () => {
   // Load existing resume on mount
   useEffect(() => {
     if (!accessToken) return;
-    fetch("http://localhost:4000/api/resumes/me", {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    })
+    apiFetch("/resumes/me")
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.data?.resume) {
@@ -69,9 +68,8 @@ export const ResumeUpload: React.FC = () => {
     if (targetRole) formData.append("targetRole", targetRole);
 
     try {
-      const res = await fetch("http://localhost:4000/api/resumes/upload", {
+      const res = await apiFetch("/resumes/upload", {
         method: "POST",
-        headers: { Authorization: `Bearer ${accessToken}` },
         body: formData,
       });
       const data = await res.json();
@@ -94,12 +92,8 @@ export const ResumeUpload: React.FC = () => {
     setError("");
     setSuccess("");
     try {
-      const res = await fetch("http://localhost:4000/api/resumes/reanalyze", {
+      const res = await apiFetch("/resumes/reanalyze", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
         body: JSON.stringify({ targetRole }),
       });
       const data = await res.json();

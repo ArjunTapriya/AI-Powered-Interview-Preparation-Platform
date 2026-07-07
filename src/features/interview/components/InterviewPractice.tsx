@@ -535,13 +535,8 @@ AI Summary: ${r.aiSummary}`;
       // Evaluate single answer parameters using Gemini API
       setIsEvaluating(true);
       try {
-        const token = localStorage.getItem("interview_prep_token") || "";
-        const res = await fetch(`http://localhost:4000/api/ai/evaluate-single-answer`, {
+        const res = await apiFetch(`/ai/evaluate-single-answer`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {})
-          },
           body: JSON.stringify({
             question: currentQuestionText,
             answer: finalAnswer,

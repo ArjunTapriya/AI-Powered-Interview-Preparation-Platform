@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { apiFetch } from "../../../utils/apiFetch";
 import { 
   Bot, Sparkles, Send, Code, Image as ImageIcon, FileText, 
   Hexagon, Plus, Mic, TrendingUp, MessageSquare
@@ -29,16 +30,9 @@ export const AIFeedback: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
 
-  const getAuthHeader = () => {
-    const token = localStorage.getItem("interview_prep_token");
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  };
-
   const fetchHistory = async (silent = false) => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:4000/api"}/ai-feedback/conversations`, {
-        headers: getAuthHeader()
-      });
+      const res = await apiFetch("/ai-feedback/conversations");
       const data = await res.json();
       
       if (data.success && data.data) {
@@ -123,9 +117,8 @@ export const AIFeedback: React.FC = () => {
   const startNewChat = async () => {
     setIsInitializing(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:4000/api"}/ai-feedback/conversations`, {
-        method: "POST",
-        headers: getAuthHeader()
+      const res = await apiFetch("/ai-feedback/conversations", {
+        method: "POST"
       });
       const data = await res.json();
       if (data.success) {
@@ -156,9 +149,8 @@ export const AIFeedback: React.FC = () => {
     // Create conversation on the fly if none exists
     if (!currentConversationId) {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:4000/api"}/ai-feedback/conversations`, {
-          method: "POST",
-          headers: getAuthHeader()
+        const res = await apiFetch("/ai-feedback/conversations", {
+          method: "POST"
         });
         const data = await res.json();
         if (data.success) {
@@ -182,12 +174,8 @@ export const AIFeedback: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:4000/api"}/ai-feedback/conversations/${currentConversationId}/message`, {
+      const res = await apiFetch(`/ai-feedback/conversations/${currentConversationId}/message`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeader()
-        },
         body: JSON.stringify({ message: messageText })
       });
       const data = await res.json();
@@ -262,7 +250,25 @@ export const AIFeedback: React.FC = () => {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 overflow-hidden flex flex-col relative">
+      <div className="flex-1 overflow-hidden flex flex-col relative bg-[#090b11]">
+        {/* Chat header panel */}
+        <div className="px-6 py-4 border-b border-[var(--surface-border-new)] bg-[#111320] flex items-center justify-between z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[var(--accent-primary)] to-[var(--accent-purple)] flex items-center justify-center shadow-lg shadow-[rgba(var(--accent-rgb),0.15)]">
+              <Bot size={18} className="text-white" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
+                AI Interview Coach
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+              </h2>
+              <p className="text-[10px] text-gray-400">Personalized feedback & mock preparation advice</p>
+            </div>
+          </div>
+        </div>
         
         {/* Background glow effects */}
         <div className="absolute top-1/4 -left-32 w-64 h-64 bg-[var(--accent-primary)]/10 rounded-full blur-[100px] pointer-events-none" />

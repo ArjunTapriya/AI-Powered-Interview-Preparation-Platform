@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../../../store/AppContext";
+import { apiFetch } from "../../../utils/apiFetch";
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
 import { KeyRound, Mail, User, ShieldAlert } from "lucide-react";
@@ -26,12 +27,11 @@ export const AuthLayout: React.FC = () => {
     setError("");
 
     try {
-      const endpoint = isLogin ? "/api/auth/login" : "/api/auth/signup";
+      const endpoint = isLogin ? "/auth/login" : "/auth/signup";
       const payload = isLogin ? { email, password } : { name, email, password };
 
-      const res = await fetch(`http://localhost:4000${endpoint}`, {
+      const res = await apiFetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
