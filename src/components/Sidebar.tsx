@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "../store/AppContext";
-import { LayoutDashboard, BookOpen, Mic, FileText, Settings, User, Users, ClipboardList, Target, Award } from "lucide-react";
+import { LayoutDashboard, BookOpen, Mic, FileText, Settings, User, Users, ClipboardList, Target, Award, BrainCircuit } from "lucide-react";
 
 export const Sidebar: React.FC = () => {
   const navigate = useNavigate();
@@ -20,8 +20,8 @@ export const Sidebar: React.FC = () => {
         className="flex items-center gap-3 cursor-pointer select-none mb-10 pl-2"
         onClick={() => navigate("/dashboard")}
       >
-        <div className="w-8 h-8 rounded-lg bg-[var(--accent-orange)] flex items-center justify-center text-white font-extrabold text-sm shadow-[0_4px_12px_rgba(249,115,22,0.4)]">
-          A
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[var(--accent-orange)] to-amber-500 flex items-center justify-center text-white shadow-[0_4px_12px_rgba(249,115,22,0.4)]">
+          <BrainCircuit size={18} />
         </div>
         <div className="flex flex-col">
           <span className="font-sans font-extrabold text-white tracking-widest text-[13px] leading-tight">
@@ -39,7 +39,7 @@ export const Sidebar: React.FC = () => {
           onClick={() => navigate("/dashboard")}
           className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold new-sidebar-item ${isActive("/dashboard") ? "active" : ""}`}
         >
-          <LayoutDashboard size={18} className={isActive("/dashboard") ? "text-[var(--accent-orange)]" : ""} /> Command Center
+          <LayoutDashboard size={18} className={isActive("/dashboard") ? "text-[var(--accent-orange)]" : ""} /> Dashboard
         </button>
         <button
           onClick={() => navigate("/roadmap")}
@@ -88,25 +88,28 @@ export const Sidebar: React.FC = () => {
           </div>
         </div>
 
-        {/* Persona Dropdown matching bottom left of image */}
-        <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[var(--surface-border-new)] hover:bg-[rgba(255,255,255,0.04)] transition-colors cursor-pointer relative group">
-          <div className="w-8 h-8 rounded-full bg-[var(--surface-hover-new)] flex items-center justify-center shrink-0 border border-white/10 overflow-hidden">
-            <User size={16} className="text-gray-400" />
+        {/* Persona Selection Block */}
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[10px] uppercase font-bold text-[var(--accent-orange)] tracking-wider px-1">Choose your interviewer</span>
+          <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-[rgba(255,255,255,0.02)] border border-[var(--surface-border-new)] hover:bg-[rgba(255,255,255,0.04)] transition-colors cursor-pointer relative group">
+            <div className="w-8 h-8 rounded-full bg-[var(--surface-hover-new)] flex items-center justify-center shrink-0 border border-white/10 overflow-hidden">
+              <User size={16} className="text-gray-400" />
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <select
+                value={activePersona}
+                onChange={(e) => setActivePersona(e.target.value as any)}
+                className="bg-transparent text-xs font-bold text-white w-full outline-none cursor-pointer appearance-none"
+              >
+                <option value="Coach" className="bg-[#1A1C29]">Coach (Supportive)</option>
+                <option value="Nitpicker" className="bg-[#1A1C29]">Nitpicker (Detail)</option>
+                <option value="Interrupter" className="bg-[#1A1C29]">Interrupter (Pivots)</option>
+                <option value="Silent" className="bg-[#1A1C29]">Silent (Evaluator)</option>
+              </select>
+              <p className="text-[10px] text-[var(--text-secondary-new)]">Interviewer Bot Behavior</p>
+            </div>
+            <Users size={14} className="text-[var(--text-secondary-new)]" />
           </div>
-          <div className="flex-1 overflow-hidden">
-            <select
-              value={activePersona}
-              onChange={(e) => setActivePersona(e.target.value as any)}
-              className="bg-transparent text-xs font-bold text-white w-full outline-none cursor-pointer appearance-none"
-            >
-              <option value="Coach" className="bg-[#1A1C29]">Coach (Supportive)</option>
-              <option value="Nitpicker" className="bg-[#1A1C29]">Nitpicker (Detail)</option>
-              <option value="Interrupter" className="bg-[#1A1C29]">Interrupter (Pivots)</option>
-              <option value="Silent" className="bg-[#1A1C29]">Silent (Evaluator)</option>
-            </select>
-            <p className="text-[10px] text-[var(--text-secondary-new)]">Interviewer</p>
-          </div>
-          <Users size={14} className="text-[var(--text-secondary-new)]" />
         </div>
       </div>
     </aside>

@@ -136,6 +136,30 @@ export const DashboardHome: React.FC = () => {
   const navigate = useNavigate();
   const { user, streak, history, accessToken, recommendation, fetchRecommendations, pingStreak, prepGuidesCache, setCurrentEvaluationId } = useApp() as any;
 
+  const insight = useMemo(() => {
+    const latestSession = history && history.length > 0 ? history[0] : null;
+    if (latestSession) {
+      const typeStr = latestSession.type;
+      const score = latestSession.overallScore;
+      const notes = latestSession.feedbackNotes || [];
+      const primaryAdvice = notes.length > 0 
+        ? notes[0] 
+        : `Refine your ${typeStr} problem-solving approach and speed.`;
+      
+      return {
+        status: `Latest Mock Interview (${typeStr}) scored ${score}%.`,
+        nextStep: `Next step: ${primaryAdvice}`,
+        focus: typeStr === "DSA" ? "DSA Practice" : typeStr === "System Design" ? "System Design" : "Behavioral Prep"
+      };
+    }
+
+    return {
+      status: `Preparing for ${user.roleDepth || 'Mid-level'} role at ${user.targetCompany || 'Google'}.`,
+      nextStep: "Next step: Start a Mock Interview practice session to establish your performance metrics.",
+      focus: "Mock Interviews"
+    };
+  }, [history, user]);
+
   const [averages, setAverages] = useState<EvaluationMetrics>(user.radarScores);
   const [lowestMetricName, setLowestMetricName] = useState<string>("correctness");
   const [activityLog, setActivityLog] = useState<number[]>([]);
@@ -425,12 +449,13 @@ export const DashboardHome: React.FC = () => {
             <div className="flex justify-between items-end mt-auto w-full">
               <div className="max-w-[60%]">
                 <p className="text-[13px] text-gray-300 mb-4 leading-relaxed">
-                  Your problem-solving speed is improving.<br/>Focus more on system design and communication clarity.
+                  <span className="font-bold text-white block mb-1">{insight.status}</span>
+                  {insight.nextStep}
                 </p>
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] text-[var(--text-secondary-new)] font-medium">Suggested Focus:</span>
                   <div className="px-3 py-1 rounded-full border border-[#8B5CF6]/40 text-[#8B5CF6] text-[11px] font-semibold bg-[#8B5CF6]/10">
-                    System Design
+                    {insight.focus}
                   </div>
                 </div>
               </div>
@@ -521,13 +546,6 @@ export const DashboardHome: React.FC = () => {
                 <span className="text-[var(--accent-orange)] font-bold">{getDsaProgress()}%</span>
               </div>
               <ProgressBar value={getDsaProgress()} size="sm" />
-            </div>
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-[11px] text-[var(--text-secondary-new)]">
-                <span>System Design</span>
-                <span className="text-[var(--accent-orange)] font-bold">6%</span>
-              </div>
-              <ProgressBar value={6} size="sm" />
             </div>
             <div className="space-y-1.5">
               <div className="flex justify-between text-[11px] text-[var(--text-secondary-new)]">

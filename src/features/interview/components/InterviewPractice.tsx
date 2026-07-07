@@ -745,24 +745,15 @@ AI Summary: ${r.aiSummary}`;
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 text-left animate-fadeIn">
+    <div className="max-w-6xl mx-auto px-4 pt-0 pb-8 text-left animate-fadeIn">
       {/* Back button or Dashboard navigate header */}
-      <div className="flex items-center justify-between pb-6 border-b border-surface-border mb-8">
-        <div>
-          <button
-            onClick={() => navigate("/dashboard")}
-            className="text-xs text-gray-400 hover:text-[var(--accent-primary)] font-mono flex items-center gap-1.5 transition-colors mb-2"
-          >
-            <ArrowLeft size={14} /> Back to Command Center
-          </button>
-          <h1 className="text-3xl font-extrabold text-white leading-tight font-sans tracking-tight m-0">
-            Interview Test With AI
-          </h1>
-          <p className="text-gray-400 mt-1 text-sm">
-            Simulation Testing
-          </p>
-        </div>
-      </div>
+      <button
+        onClick={() => navigate("/dashboard")}
+        className="p-2 rounded-lg bg-[rgba(255,255,255,0.03)] border border-[var(--surface-border-new)] text-gray-400 hover:text-[var(--accent-primary)] hover:bg-white/5 transition-all mb-6"
+        title="Back to Dashboard"
+      >
+        <ArrowLeft size={18} />
+      </button>
 
       {/* STEP 1: SETUP SCREEN */}
       {step === "setup" && (

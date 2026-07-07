@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, BrainCircuit, Activity, Library, Clock, BookMarked } from 'lucide-react';
+import { useApp } from "../../../store/AppContext";
 
 export const HeroSection: React.FC = () => {
+  const { streak } = useApp();
   const [stats, setStats] = useState({
     resources: 0,
     notes: 0,
@@ -27,14 +29,14 @@ export const HeroSection: React.FC = () => {
         resources: Math.floor(easeProgress * 543),
         notes: Math.floor(easeProgress * 128),
         hours: Math.floor(easeProgress * 42),
-        streak: Math.floor(easeProgress * 14)
+        streak: Math.floor(easeProgress * streak)
       });
 
       if (currentStep >= steps) clearInterval(interval);
     }, stepTime);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [streak]);
 
   return (
     <div className="flex flex-col gap-6 mb-8 relative">
@@ -56,10 +58,6 @@ export const HeroSection: React.FC = () => {
             <span className="text-xs text-gray-500 font-mono tracking-wider hidden sm:inline-block">MONITORING 500+ TRUSTED SOURCES</span>
           </div>
           
-          <h1 className="text-3xl md:text-4xl font-extrabold text-white flex items-center gap-3">
-            Notes & Resources
-            <Sparkles className="text-[var(--accent-purple)] w-6 h-6 animate-pulse" />
-          </h1>
           <p className="text-gray-400 text-sm md:text-base max-w-2xl leading-relaxed">
             Curated notes, personalized articles, cheat sheets, and practice recommendations 
             generated specifically for your interview journey by your AI Assistant.

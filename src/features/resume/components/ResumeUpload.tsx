@@ -132,15 +132,7 @@ export const ResumeUpload: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fadeIn max-w-6xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="border-b border-surface-border pb-6">
-        <h1 className="text-3xl font-extrabold text-white tracking-tight font-sans">
-          Resume <span className="text-[var(--accent-primary)]">Intelligence</span>
-        </h1>
-        <p className="text-gray-400 mt-1 text-sm">
-          Upload your PDF resume to extract skills, experience, and get AI-powered resume scoring.
-        </p>
-      </div>
+
 
       {/* Alerts */}
       {error && (

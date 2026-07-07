@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "../store/AppContext";
-import { Zap, BookOpen, LayoutDashboard, LogOut, Mic, FileText } from "lucide-react";
+import { Zap, BookOpen, LayoutDashboard, LogOut, Mic, FileText, BrainCircuit } from "lucide-react";
 
 export const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -36,8 +36,8 @@ export const Navbar: React.FC = () => {
         className="flex items-center gap-2 cursor-pointer select-none"
         onClick={() => navigate("/dashboard")}
       >
-        <div className="w-8 h-8 rounded-lg bg-[var(--accent-primary)] flex items-center justify-center text-white font-extrabold text-sm shadow-[0_4px_12px_var(--accent-glow)]">
-          A
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[var(--accent-primary)] to-amber-500 flex items-center justify-center text-white shadow-[0_4px_12px_var(--accent-glow)]">
+          <BrainCircuit size={18} />
         </div>
         <span className="font-sans font-bold text-white tracking-wider text-base">
           INTERVIEW <span className="text-[var(--accent-primary)]">PREPARATION</span>
@@ -50,7 +50,7 @@ export const Navbar: React.FC = () => {
           onClick={() => navigate("/dashboard")}
           className={`flex items-center gap-1.5 transition-colors hover:text-white ${isActive("/dashboard") ? "text-[var(--accent-primary)] font-semibold" : ""}`}
         >
-          <LayoutDashboard size={16} /> Command Center
+          <LayoutDashboard size={16} /> Dashboard
         </button>
         <button
           onClick={() => navigate("/roadmap")}

@@ -168,24 +168,6 @@ export const RoadmapTree: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fadeIn max-w-6xl mx-auto px-4 py-6 text-left">
-      <div className="border-b border-surface-border pb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold text-white leading-tight font-sans tracking-tight m-0">
-            Make the Roadmap
-          </h1>
-          <p className="text-gray-400 mt-1 text-sm">
-            Review your 10-Step AI preparation guides tailored specifically to your past interview performances.
-          </p>
-        </div>
-
-        <button
-          onClick={() => navigate("/dashboard")}
-          className="text-xs text-[var(--accent-primary)] hover:text-[var(--accent-hover)] font-mono flex items-center gap-1.5 transition-colors border border-[rgba(var(--accent-rgb),0.2)] bg-[rgba(var(--accent-rgb),0.05)] px-3.5 py-1.5 rounded-lg"
-        >
-          Return to Dashboard
-        </button>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         
         {/* HR Round Column */}

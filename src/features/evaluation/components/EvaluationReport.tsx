@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp, type InterviewSession } from "../../../store/AppContext";
+import { apiFetch } from "../../../utils/apiFetch";
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
 import { ProgressBar } from "../../../components/ui/ProgressBar";
@@ -18,7 +19,7 @@ import {
 
 export const EvaluationReport: React.FC = () => {
   const navigate = useNavigate();
-  const { currentEvaluation, currentEvaluationId, setCurrentEvaluation, setCurrentEvaluationId, history, accessToken } = useApp() as any;
+  const { currentEvaluation, currentEvaluationId, setCurrentEvaluation, setCurrentEvaluationId, history } = useApp() as any;
 
   // All hook declarations first (Unconditional)
   const [localSession, setLocalSession] = useState<InterviewSession | null>(currentEvaluation);
@@ -34,14 +35,13 @@ export const EvaluationReport: React.FC = () => {
       setLoading(false);
       return;
     }
-    // If we have an ID but no currentEvaluation loaded (e.g. after refresh), fetch it
-    if (currentEvaluationId && accessToken) {
-      setLoading(true);
-      fetch(`http://localhost:4000/api/interviews/${currentEvaluationId}/report`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
+    setLoading(true);
+    apiFetch(`/interviews/${currentEvaluationId}/report`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load report");
+        return res.json();
       })
-      .then(res => res.json())
-      .then(data => {
+      .then((data) => {
         if (data.success && data.data?.session) {
           // Provide defaults for UI rendering if any fields are missing
           const fullSession: InterviewSession = {
@@ -57,9 +57,11 @@ export const EvaluationReport: React.FC = () => {
           if (setCurrentEvaluation) setCurrentEvaluation(fullSession);
         }
       })
+      .catch((err) => {
+        console.error("Error loading report from Supabase:", err);
+      })
       .finally(() => setLoading(false));
-    }
-  }, [currentEvaluationId, accessToken]);
+  }, [currentEvaluationId]);
 
   // Audio Playback scrubber logic
   const maxTimeSec = 120; // 2 mins simulation
@@ -91,23 +93,14 @@ export const EvaluationReport: React.FC = () => {
   // If no report ID is selected, show the history list representation
   if (!currentEvaluationId) {
     return (
-      <div className="space-y-8 animate-fadeIn max-w-5xl mx-auto px-4 py-6 text-left">
-        <div className="flex items-center justify-between border-b border-surface-border pb-6">
-          <div>
-            <button
-              onClick={() => navigate("/dashboard")}
-              className="text-xs text-gray-400 hover:text-[var(--accent-primary)] font-mono flex items-center gap-1.5 transition-colors mb-2"
-            >
-              <ArrowLeft size={14} /> Back to Command Center
-            </button>
-            <h1 className="text-3xl font-extrabold text-white leading-tight font-sans tracking-tight m-0 font-display">
-              Evaluation History
-            </h1>
-            <p className="text-gray-400 mt-1 text-sm">
-              Review all your completed mock interviews and coding diagnostic reports.
-            </p>
-          </div>
-        </div>
+      <div className="space-y-6 animate-fadeIn max-w-5xl mx-auto px-4 pt-0 pb-6 text-left">
+        <button
+          onClick={() => navigate("/dashboard")}
+          className="p-2 rounded-lg bg-[rgba(255,255,255,0.03)] border border-[var(--surface-border-new)] text-gray-400 hover:text-[var(--accent-primary)] hover:bg-white/5 transition-all mb-4"
+          title="Back to Dashboard"
+        >
+          <ArrowLeft size={18} />
+        </button>
 
         <div className="grid grid-cols-1 gap-4">
           {history && history.length > 0 ? (
@@ -175,7 +168,8 @@ export const EvaluationReport: React.FC = () => {
   }
 
   // If report ID is selected, calculate and render scorecard details
-  const session: InterviewSession = localSession || currentEvaluation || {
+  const foundSession = history?.find((s: any) => s.id === currentEvaluationId);
+  const session: InterviewSession = localSession || foundSession || currentEvaluation || {
     id: "session-fallback",
     company: "Google",
     date: new Date().toISOString().split("T")[0],
@@ -236,10 +230,10 @@ export const EvaluationReport: React.FC = () => {
   const activeTranscriptIdx = getActiveTranscriptIndex();
 
   return (
-    <div className="space-y-8 animate-fadeIn max-w-7xl mx-auto px-4 py-6 text-left">
+    <div className="space-y-6 animate-fadeIn max-w-7xl mx-auto px-4 pt-0 pb-6 text-left">
       {/* Header controls */}
-      <div className="flex items-center gap-3 justify-between border-b border-surface-border pb-6">
-        <div>
+      <div className="flex items-center justify-between gap-4 mb-4">
+        <div className="flex items-center gap-4">
           <button
             onClick={() => {
               if (setCurrentEvaluationId) {
@@ -248,16 +242,17 @@ export const EvaluationReport: React.FC = () => {
                 navigate("/dashboard");
               }
             }}
-            className="text-xs text-gray-400 hover:text-[var(--accent-primary)] font-mono flex items-center gap-1.5 transition-colors mb-2"
+            className="p-2 rounded-lg bg-[rgba(255,255,255,0.03)] border border-[var(--surface-border-new)] text-gray-400 hover:text-[var(--accent-primary)] hover:bg-white/5 transition-all"
+            title="Back to Reports History"
           >
-            <ArrowLeft size={14} /> Back to Reports History
+            <ArrowLeft size={18} />
           </button>
-          <h1 className="text-3xl font-extrabold text-white leading-tight font-sans tracking-tight m-0">
-            Performance Review
-          </h1>
-          <p className="text-gray-400 mt-1 text-sm">
-            Analysis scorecards for mock run on {session.company} ({session.type}) completed.
-          </p>
+          <div>
+            <h2 className="text-lg font-bold text-white m-0">Performance Review</h2>
+            <p className="text-gray-400 mt-0.5 text-xs m-0">
+              Analysis scorecards for mock run on {session.company} ({session.type}) completed.
+            </p>
+          </div>
         </div>
 
         <Button onClick={() => navigate("/roadmap")} variant="glow" size="sm" className="gap-1.5">

@@ -1,7 +1,7 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useApp } from "../store/AppContext";
-import { Zap, Moon, Sun, Bell, Settings } from "lucide-react";
+import { Zap, Moon, Sun, Bell, Settings, Sparkles } from "lucide-react";
 
 export const TopHeader: React.FC = () => {
   const location = useLocation();
@@ -12,21 +12,26 @@ export const TopHeader: React.FC = () => {
   if (hiddenRoutes.includes(location.pathname)) return null;
 
   const getTitle = () => {
-    if (location.pathname.startsWith("/dashboard")) return "Command Center ✨";
+    if (location.pathname.startsWith("/dashboard")) return "Dashboard ✨";
     if (location.pathname.startsWith("/roadmap")) return "Roadmap Planner";
     if (location.pathname.startsWith("/interview-practice")) return "Mock Interviews";
     if (location.pathname.startsWith("/resume")) return "Resume Intelligence";
     if (location.pathname.startsWith("/admin")) return "Admin Panel";
     if (location.pathname.startsWith("/series")) return "Question Series";
-    if (location.pathname.startsWith("/ai-feedback")) return "";
+    if (location.pathname.startsWith("/ai-feedback")) return "AI Feedback";
+    if (location.pathname.startsWith("/notes")) return "Notes and Resources";
+    if (location.pathname.startsWith("/evaluation")) return "Evaluation History";
     return "Dashboard";
   };
 
   return (
     <header className="flex items-start justify-between px-8 py-6 w-full">
       <div className="flex flex-col">
-        <h1 className="text-[28px] font-bold text-white tracking-tight mb-1">
+        <h1 className="text-[28px] font-bold text-white tracking-tight mb-1 flex items-center gap-2">
           {getTitle()}
+          {location.pathname.startsWith("/notes") && (
+            <Sparkles className="text-[var(--accent-purple)] w-6 h-6 animate-pulse" />
+          )}
         </h1>
       </div>
 
