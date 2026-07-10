@@ -12,6 +12,9 @@ router.use(rateLimiter); // Apply rate limits to AI endpoints to prevent abuse
 // AI Mentor Chat
 router.post("/chat", asyncHandler(mentorController.chat));
 
+// AI Mentor Streaming (SSE)
+router.post("/stream", mentorController.stream);
+
 // AI Mentor Quick Actions
 router.post("/hint", asyncHandler(mentorController.requestHint));
 router.post("/debug", asyncHandler(mentorController.debugCode));

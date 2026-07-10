@@ -136,12 +136,29 @@ export const InterviewPractice: React.FC = () => {
         const data = await res.json();
         if (res.ok && data.success && data.data?.resume) {
           const r = data.data.resume;
+          
+          const skillsList = Array.isArray(r.skills)
+            ? r.skills
+            : (r.skills?.current || []);
+          const experienceList = Array.isArray(r.experience)
+            ? r.experience
+            : (r.experience?.current || []);
+          const educationList = Array.isArray(r.education)
+            ? r.education
+            : (r.education?.current || []);
+          const projectsList = Array.isArray(r.projects)
+            ? r.projects
+            : (r.projects?.current || []);
+          const summaryText = Array.isArray(r.aiSummary)
+            ? r.aiSummary.join("\n")
+            : (r.aiSummary || "");
+
           const dynamicResumeContent = `Candidate Resume Profile Details:
-Skills: ${r.skills.join(", ")}
-Experience: ${JSON.stringify(r.experience)}
-Education: ${JSON.stringify(r.education)}
-Projects: ${JSON.stringify(r.projects)}
-AI Summary: ${r.aiSummary}`;
+Skills: ${skillsList.join(", ")}
+Experience: ${JSON.stringify(experienceList)}
+Education: ${JSON.stringify(educationList)}
+Projects: ${JSON.stringify(projectsList)}
+AI Summary: ${summaryText}`;
           setResumeText(dynamicResumeContent);
         } else {
           alert("Failed to parse the resume: " + (data.message || "Unknown error"));

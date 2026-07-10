@@ -1,15 +1,53 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useApp } from "../store/AppContext";
-import { Zap, Moon, Sun, Bell, Settings, Sparkles } from "lucide-react";
+import { Zap, Moon, Sun, Bell, Settings, Sparkles, ChevronLeft } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "../utils/apiFetch";
 
 export const TopHeader: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, streak, themeAccent, setThemeAccent, themeMode, setThemeMode } = useApp();
+  const { user, streak, themeAccent, setThemeAccent, themeMode, setThemeMode, activeChallenge, currentEvaluationId, history } = useApp() as any;
 
   const hiddenRoutes = ["/", "/auth", "/onboarding"];
   if (hiddenRoutes.includes(location.pathname)) return null;
+
+  const { data: seriesData } = useQuery({
+    queryKey: ["questions", "sets"],
+    queryFn: async () => {
+      const res = await apiFetch("/questions/sets");
+      const data = await res.json();
+      if (res.ok && data.success) return data.data.sets;
+      return null;
+    },
+  });
+
+  const getSeriesId = () => {
+    const isTargetPage = location.pathname.startsWith("/workspace") || location.pathname.startsWith("/evaluation");
+    if (!isTargetPage || !seriesData) return null;
+
+    if (activeChallenge) {
+      const challengeId = activeChallenge.id;
+      if (seriesData.set1?.some((q: any) => q.id === challengeId)) return "1";
+      if (seriesData.set2?.some((q: any) => q.id === challengeId)) return "2";
+      if (seriesData.set3?.some((q: any) => q.id === challengeId)) return "3";
+    }
+
+    if (location.pathname.startsWith("/evaluation") && currentEvaluationId && history) {
+      const session = history.find((s: any) => s.id === currentEvaluationId);
+      if (session) {
+        const matchTitle = (q: any) => q.title === session.company || q.id === session.company;
+        if (seriesData.set1?.some(matchTitle)) return "1";
+        if (seriesData.set2?.some(matchTitle)) return "2";
+        if (seriesData.set3?.some(matchTitle)) return "3";
+      }
+    }
+
+    return null;
+  };
+
+  const seriesId = getSeriesId();
 
   const getTitle = () => {
     if (location.pathname.startsWith("/dashboard")) return "Dashboard ✨";
@@ -28,7 +66,17 @@ export const TopHeader: React.FC = () => {
     <header className="flex items-start justify-between px-8 py-6 w-full">
       <div className="flex flex-col">
         <h1 className="text-[28px] font-bold text-white tracking-tight mb-1 flex items-center gap-2">
-          {getTitle()}
+          {seriesId ? (
+            <button
+              onClick={() => navigate(`/series/${seriesId}`)}
+              className="hover:text-[var(--accent-primary)] transition-all flex items-center gap-1.5 text-[28px] font-bold text-white bg-transparent border-none p-0 cursor-pointer text-left group"
+            >
+              <ChevronLeft className="w-7 h-7 text-gray-400 group-hover:text-[var(--accent-primary)] transition-colors" />
+              Question Series
+            </button>
+          ) : (
+            getTitle()
+          )}
           {location.pathname.startsWith("/notes") && (
             <Sparkles className="text-[var(--accent-purple)] w-6 h-6 animate-pulse" />
           )}

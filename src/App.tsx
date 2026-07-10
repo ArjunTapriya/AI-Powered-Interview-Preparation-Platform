@@ -75,7 +75,7 @@ const AppContent: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
-              className="h-full"
+              className="min-h-full flex flex-col"
             >
               <Routes location={location}>
                 <Route path="/pricing" element={<PricingPage />} />

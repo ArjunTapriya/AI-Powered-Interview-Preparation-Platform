@@ -13,6 +13,134 @@ import {
 } from "lucide-react";
 import { StressSimulator } from "./StressSimulator";
 
+// Helper to decode HTML entities
+const decodeHtml = (html: string): string => {
+  if (!html) return "";
+  try {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    return doc.documentElement.textContent || html;
+  } catch (e) {
+    return html
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&nbsp;/g, ' ');
+  }
+};
+
+interface ParsedChallenge {
+  description: string;
+  examples: { title: string; input: string; output: string; explanation?: string }[];
+  constraints: string[];
+}
+
+const parseChallengeContent = (challenge: any): ParsedChallenge => {
+  const decodedFull = decodeHtml(challenge.description || "");
+
+  // Detect if examples are embedded in the description
+  const exampleRegex = /Example\s+(\d+)\s*:/gi;
+  const hasEmbeddedExamples = exampleRegex.test(decodedFull);
+  exampleRegex.lastIndex = 0;
+
+  if (!hasEmbeddedExamples) {
+    return {
+      description: decodedFull,
+      examples: (challenge.examples || []).map((ex: any, idx: number) => ({
+        title: `Example ${idx + 1}`,
+        input: ex.input || "",
+        output: ex.output || "",
+        explanation: ex.explanation || "",
+      })),
+      constraints: challenge.constraints || [],
+    };
+  }
+
+  const firstExampleIndex = decodedFull.search(/Example\s+1\s*:/i);
+  let mainDesc = decodedFull;
+  let remainingText = "";
+
+  if (firstExampleIndex !== -1) {
+    mainDesc = decodedFull.substring(0, firstExampleIndex).trim();
+    remainingText = decodedFull.substring(firstExampleIndex).trim();
+  }
+
+  const constraintsIndex = remainingText.search(/Constraints\s*:/i);
+  let examplesPart = remainingText;
+  let constraintsPart = "";
+
+  if (constraintsIndex !== -1) {
+    examplesPart = remainingText.substring(0, constraintsIndex).trim();
+    constraintsPart = remainingText.substring(constraintsIndex).trim();
+  }
+
+  const exampleMatches = [...examplesPart.matchAll(/Example\s+(\d+)\s*:/gi)];
+  const parsedExamples: any[] = [];
+
+  for (let i = 0; i < exampleMatches.length; i++) {
+    const match = exampleMatches[i];
+    const num = match[1];
+    const startIndex = match.index! + match[0].length;
+    const endIndex = i + 1 < exampleMatches.length ? exampleMatches[i + 1].index : examplesPart.length;
+    const exampleBody = examplesPart.substring(startIndex, endIndex).trim();
+
+    let input = "";
+    let output = "";
+    let explanation = "";
+
+    const lines = exampleBody.split("\n");
+    let currentKey: "input" | "output" | "explanation" | null = null;
+
+    for (let line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("Input:")) {
+        input = trimmed.replace("Input:", "").trim();
+        currentKey = "input";
+      } else if (trimmed.startsWith("Output:")) {
+        output = trimmed.replace("Output:", "").trim();
+        currentKey = "output";
+      } else if (trimmed.startsWith("Explanation:")) {
+        explanation = trimmed.replace("Explanation:", "").trim();
+        currentKey = "explanation";
+      } else if (trimmed) {
+        if (currentKey === "input") {
+          input += "\n" + trimmed;
+        } else if (currentKey === "output") {
+          output += "\n" + trimmed;
+        } else if (currentKey === "explanation") {
+          explanation += "\n" + trimmed;
+        }
+      }
+    }
+
+    parsedExamples.push({
+      title: `Example ${num}`,
+      input: input.trim(),
+      output: output.trim(),
+      explanation: explanation.trim(),
+    });
+  }
+
+  const parsedConstraints: string[] = [];
+  if (constraintsPart) {
+    const cleanConstraints = constraintsPart.replace(/Constraints\s*:/i, "").trim();
+    const lines = cleanConstraints.split("\n");
+    for (let line of lines) {
+      const trimmed = line.trim().replace(/^\s*[\t•\-*]\s*/, "").trim();
+      if (trimmed) {
+        parsedConstraints.push(trimmed);
+      }
+    }
+  }
+
+  return {
+    description: mainDesc,
+    examples: parsedExamples,
+    constraints: parsedConstraints,
+  };
+};
+
 export const PracticeWorkspace: React.FC = () => {
   const navigate = useNavigate();
   const {
@@ -44,6 +172,8 @@ export const PracticeWorkspace: React.FC = () => {
       { speaker: "Candidate", text: "Uhm, it would be, like, O(1) auxiliary space since we only adjust the references.", isFiller: true }
     ]
   };
+
+  const parsed = parseChallengeContent(challenge);
 
   // State Management
   const [leftTab, setLeftTab] = useState<"instructions" | "whiteboard">("instructions");
@@ -152,7 +282,7 @@ export const PracticeWorkspace: React.FC = () => {
       if (lang === "cpp") return "#include <string>\nusing namespace std;\n\nint lengthOfLongestSubstring(string s) {\n    return 0;\n}";
       if (lang === "java") return "class Solution {\n    public int lengthOfLongestSubstring(String s) {\n        return 0;\n    }\n}";
     }
-    
+
     if (lang === "python") return "def solve(data):\n    return None";
     if (lang === "cpp") return "#include <iostream>\nusing namespace std;\n\nint solve(int data) {\n    return 0;\n}";
     if (lang === "java") return "class Solution {\n    public int solve(int data) {\n        return 0;\n    }\n}";
@@ -418,7 +548,7 @@ export const PracticeWorkspace: React.FC = () => {
     // Build evaluations session model
     const newSession: InterviewSession = {
       id: `session-user-${Date.now()}`,
-      company: challenge.type === "DSA" ? "Google" : "Meta",
+      company: challenge.title,
       date: new Date().toISOString().split("T")[0],
       type: challenge.type,
       overallScore,
@@ -463,18 +593,18 @@ export const PracticeWorkspace: React.FC = () => {
         method: "POST",
         body: JSON.stringify(newSession),
       })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          setHistory(prev => [data.data.session, ...prev]);
-        } else {
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setHistory(prev => [data.data.session, ...prev]);
+          } else {
+            setHistory(prev => [newSession, ...prev]);
+          }
+        })
+        .catch(err => {
+          console.error("Failed to post session", err);
           setHistory(prev => [newSession, ...prev]);
-        }
-      })
-      .catch(err => {
-        console.error("Failed to post session", err);
-        setHistory(prev => [newSession, ...prev]);
-      });
+        });
     } else {
       setHistory((prev) => [newSession, ...prev]);
     }
@@ -485,9 +615,9 @@ export const PracticeWorkspace: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-[92vh] overflow-hidden">
+    <div className="flex flex-col space-y-6 w-full pb-10">
       {/* Top action status panel */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-surface-border bg-surface-solid/40">
+      <div className="flex items-center justify-between px-6 py-4 border border-surface-border bg-surface-solid/40 rounded-xl shrink-0 shadow-lg">
         <div>
           <span className="text-xs font-mono tracking-widest text-[var(--accent-primary)] uppercase font-semibold">
             Active Prep Room • {challenge.type} Loop
@@ -510,67 +640,97 @@ export const PracticeWorkspace: React.FC = () => {
       </div>
 
       {/* Main Resizable split editor body */}
-      <div className="flex-grow grid grid-cols-1 lg:grid-cols-12 overflow-hidden h-full">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
         {/* Left pane: Instructions or whiteboard (4/12 cols) */}
-        <div className="lg:col-span-4 border-r border-surface-border flex flex-col h-full bg-slate-950/20">
+        <div className="lg:col-span-4 border border-surface-border rounded-xl flex flex-col bg-slate-950/20 lg:h-[750px] overflow-hidden shadow-lg">
           <div className="flex border-b border-surface-border bg-surface-solid/40">
             <button
               onClick={() => setLeftTab("instructions")}
-              className={`flex-1 py-3 px-4 text-xs font-semibold uppercase tracking-wider border-b-2 text-center transition-all ${
-                leftTab === "instructions"
+              className={`flex-1 py-3 px-4 text-xs font-semibold uppercase tracking-wider border-b-2 text-center transition-all ${leftTab === "instructions"
                   ? "border-[var(--accent-primary)] text-[var(--accent-primary)] bg-white/5"
                   : "border-transparent text-gray-500 hover:text-gray-300"
-              }`}
+                }`}
             >
               Problem Specs
             </button>
             <button
               onClick={() => setLeftTab("whiteboard")}
-              className={`flex-1 py-3 px-4 text-xs font-semibold uppercase tracking-wider border-b-2 text-center transition-all ${
-                leftTab === "whiteboard"
+              className={`flex-1 py-3 px-4 text-xs font-semibold uppercase tracking-wider border-b-2 text-center transition-all ${leftTab === "whiteboard"
                   ? "border-[var(--accent-primary)] text-[var(--accent-primary)] bg-white/5"
                   : "border-transparent text-gray-500 hover:text-gray-300"
-              }`}
+                }`}
             >
               System Canvas
             </button>
           </div>
 
           {/* Left panel body scroll */}
-          <div className="flex-grow overflow-y-auto bg-[#1a1a1a] custom-scrollbar p-6">
+          <div className="flex-grow overflow-y-auto bg-[#18181b] custom-scrollbar p-6">
             {leftTab === "instructions" ? (
-              <div className="space-y-6 text-left">
-                {/* Title and Difficulty */}
-                <div className="space-y-3">
-                  <h3 className="text-2xl font-bold text-gray-100">{challenge.title}</h3>
-                  <div className="flex justify-between items-center">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      challenge.difficulty === "Hard"
-                        ? "bg-rose-500/10 text-rose-400"
+              <div className="space-y-6 text-left text-gray-200 font-sans text-sm antialiased select-text">
+                {/* Title and Difficulty Badges */}
+                <div className="space-y-4 pb-4 border-b border-white/5">
+                  <h3 className="text-xl font-bold text-white tracking-tight">
+                    {challenge.title}
+                  </h3>
+
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    {/* Difficulty Badge */}
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${challenge.difficulty === "Hard"
+                        ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
                         : challenge.difficulty === "Medium"
-                        ? "bg-amber-500/10 text-amber-400"
-                        : "bg-emerald-500/10 text-emerald-400"
-                    }`}>
+                          ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                          : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                      }`}>
                       {challenge.difficulty}
                     </span>
+
+                    {/* Topics Badge */}
+                    <button className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 transition-colors">
+                      <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
+                        <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 8.25c-.97 0-1.75-.78-1.75-1.75s.78-1.75 1.75-1.75 1.75.78 1.75 1.75-.78 1.75-1.75 1.75z" />
+                      </svg>
+                      Topics
+                    </button>
+
+                    {/* Companion Badge */}
+                    <button className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 transition-colors">
+                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                      Companion
+                    </button>
                   </div>
                 </div>
 
-                {/* Description */}
-                <div className="text-[15px] text-gray-300 leading-relaxed font-sans whitespace-pre-wrap">
-                  {challenge.description}
+                {/* Problem Statement */}
+                <div className="text-[14px] text-gray-300 leading-relaxed font-normal whitespace-pre-wrap">
+                  {parsed.description}
                 </div>
 
                 {/* Examples */}
-                {challenge.examples && challenge.examples.length > 0 && (
-                  <div className="space-y-4 pt-4">
-                    {challenge.examples.map((ex: any, idx: number) => (
+                {parsed.examples && parsed.examples.length > 0 && (
+                  <div className="space-y-5 pt-4">
+                    {parsed.examples.map((ex: any, idx: number) => (
                       <div key={idx} className="space-y-2">
-                        <p className="font-bold text-gray-200 text-[15px]">Example {idx + 1}:</p>
-                        <div className="bg-[#282828] border-l-4 border-gray-500 p-4 rounded text-sm text-gray-300 font-mono space-y-2">
-                          <div><span className="font-bold text-gray-400">Input:</span> {ex.input}</div>
-                          <div><span className="font-bold text-gray-400">Output:</span> {ex.output}</div>
-                          {ex.explanation && <div><span className="font-bold text-gray-400">Explanation:</span> {ex.explanation}</div>}
+                        <p className="font-semibold text-white text-sm">{ex.title}:</p>
+                        <div className="bg-[#1f1f23]/90 border border-white/5 rounded-xl p-4 text-xs font-mono text-gray-300 space-y-2.5 shadow-inner">
+                          {ex.input && (
+                            <div className="flex items-start">
+                              <span className="font-semibold text-gray-400 select-none mr-2 w-12 shrink-0">Input:</span>
+                              <code className="text-gray-200 select-text break-all whitespace-pre-wrap">{ex.input}</code>
+                            </div>
+                          )}
+                          {ex.output && (
+                            <div className="flex items-start">
+                              <span className="font-semibold text-gray-400 select-none mr-2 w-12 shrink-0">Output:</span>
+                              <code className="text-gray-200 select-text break-all whitespace-pre-wrap">{ex.output}</code>
+                            </div>
+                          )}
+                          {ex.explanation && (
+                            <div className="flex items-start border-t border-white/5 pt-2.5 mt-2 text-gray-400">
+                              <span className="font-semibold text-gray-500 select-none mr-2 w-12 shrink-0">Explain:</span>
+                              <span className="select-text leading-relaxed text-gray-300 whitespace-pre-wrap">{ex.explanation}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -578,13 +738,16 @@ export const PracticeWorkspace: React.FC = () => {
                 )}
 
                 {/* Constraints */}
-                {challenge.constraints && challenge.constraints.length > 0 && (
+                {parsed.constraints && parsed.constraints.length > 0 && (
                   <div className="pt-4 space-y-3">
-                    <p className="font-bold text-gray-200 text-[15px]">Constraints:</p>
-                    <ul className="list-disc pl-5 space-y-1.5">
-                      {challenge.constraints.map((c: string, idx: number) => (
-                        <li key={idx} className="text-sm text-gray-400">
-                          <code className="bg-[#282828] text-gray-200 px-1.5 py-0.5 rounded text-[13px]">{c}</code>
+                    <p className="font-semibold text-white text-sm">Constraints:</p>
+                    <ul className="space-y-2 pl-1">
+                      {parsed.constraints.map((c: string, idx: number) => (
+                        <li key={idx} className="flex items-start gap-2.5 text-xs text-gray-300 font-mono">
+                          <span className="text-gray-600 mt-1 select-none">•</span>
+                          <code className="bg-[#1f1f23] text-gray-200 px-2 py-0.5 rounded-md border border-white/5 text-[11px] leading-relaxed break-all">
+                            {c}
+                          </code>
                         </li>
                       ))}
                     </ul>
@@ -620,11 +783,10 @@ export const PracticeWorkspace: React.FC = () => {
                       <button
                         key={tool.id}
                         onClick={() => setDrawTool(tool.id as any)}
-                        className={`px-2.5 py-1 rounded text-xs font-mono font-semibold transition-all ${
-                          drawTool === tool.id
+                        className={`px-2.5 py-1 rounded text-xs font-mono font-semibold transition-all ${drawTool === tool.id
                             ? "bg-cyan-500 text-white"
                             : "bg-white/5 text-gray-400 hover:text-white"
-                        }`}
+                          }`}
                       >
                         {tool.label}
                       </button>
@@ -635,9 +797,8 @@ export const PracticeWorkspace: React.FC = () => {
                       <button
                         key={color}
                         onClick={() => setDrawColor(color)}
-                        className={`w-4 h-4 rounded-full border border-white/10 ${
-                          drawColor === color ? "ring-2 ring-cyan-500" : ""
-                        }`}
+                        className={`w-4 h-4 rounded-full border border-white/10 ${drawColor === color ? "ring-2 ring-cyan-500" : ""
+                          }`}
                         style={{ backgroundColor: color }}
                       />
                     ))}
@@ -670,7 +831,7 @@ export const PracticeWorkspace: React.FC = () => {
         </div>
 
         {/* Center: Editor and console output (5/12 cols) */}
-        <div className="lg:col-span-5 border-r border-surface-border flex flex-col h-full bg-[#0B0B0E]">
+        <div className="lg:col-span-5 border border-surface-border rounded-xl flex flex-col bg-[#0B0B0E] lg:h-[750px] overflow-hidden shadow-lg">
           {/* Editor header */}
           <div className="flex items-center justify-between border-b border-surface-border px-4 py-2 bg-surface-solid/40">
             <span className="text-xs font-mono text-[var(--accent-primary)] flex items-center gap-1.5">
@@ -709,27 +870,35 @@ export const PracticeWorkspace: React.FC = () => {
           </div>
 
           {/* Console logger panel */}
-          <div className="h-[180px] border-t border-surface-border flex flex-col bg-black/40">
-            <div className="px-4 py-1.5 border-b border-surface-border bg-slate-950 flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-gray-400 font-mono">Terminal Output</span>
+          <div className="h-[220px] border-t border-surface-border flex flex-col bg-[#141416]">
+            <div className="px-4 py-2 border-b border-surface-border bg-black/45 flex justify-between items-center shrink-0">
+              <div className="flex items-center gap-1">
                 <button
                   type="button"
-                  onClick={() => setShowStdin(!showStdin)}
-                  className={`text-[10px] font-mono px-2 py-0.5 rounded transition-all ${
-                    showStdin
-                      ? "bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border border-[var(--accent-primary)]/40"
-                      : "bg-white/5 text-gray-500 border border-transparent hover:text-gray-300"
-                  }`}
+                  onClick={() => setShowStdin(false)}
+                  className={`text-xs font-mono px-3 py-1.5 rounded-lg transition-all ${!showStdin
+                      ? "bg-white/10 text-white font-semibold"
+                      : "text-gray-400 hover:text-gray-200"
+                    }`}
                 >
-                  Custom Input
+                  Console Output
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowStdin(true)}
+                  className={`text-xs font-mono px-3 py-1.5 rounded-lg transition-all ${showStdin
+                      ? "bg-white/10 text-white font-semibold"
+                      : "text-gray-400 hover:text-gray-200"
+                    }`}
+                >
+                  Custom Testcases
                 </button>
               </div>
               <div className="flex items-center gap-2">
                 <Button
                   variant="glow"
                   size="sm"
-                  className="py-1 px-3 text-xs"
+                  className="py-1.5 px-3 text-xs"
                   onClick={handleCompileCode}
                   loading={isCompiling}
                   disabled={isSubmitting}
@@ -739,7 +908,7 @@ export const PracticeWorkspace: React.FC = () => {
                 <Button
                   variant="primary"
                   size="sm"
-                  className="py-1 px-3 text-xs"
+                  className="py-1.5 px-3 text-xs"
                   onClick={handleSubmitCode}
                   loading={isSubmitting}
                   disabled={isCompiling}
@@ -748,57 +917,68 @@ export const PracticeWorkspace: React.FC = () => {
                 </Button>
               </div>
             </div>
+
             <div className="flex-grow flex overflow-hidden text-xs font-mono text-left">
-              {showStdin && (
-                <div className="w-1/3 border-r border-surface-border flex flex-col bg-black/20">
-                  <div className="px-3 py-1 bg-black/40 border-b border-surface-border text-gray-500 select-none text-[10px]">
-                    STDIN
-                  </div>
+              {showStdin ? (
+                <div className="w-full flex flex-col bg-[#0f0f11]/90">
                   <textarea
                     value={stdin}
                     onChange={(e) => setStdin(e.target.value)}
-                    className="flex-grow p-3 bg-transparent outline-none border-none resize-none text-gray-300 font-mono text-xs"
-                    placeholder="Enter custom inputs..."
+                    className="flex-grow p-4 bg-transparent outline-none border-none resize-none text-gray-300 font-mono text-xs focus:ring-0"
+                    placeholder="Provide standard input (STDIN) for execution. For example, [2, 7, 11, 15] or target values..."
                   />
                 </div>
-              )}
-              <div className="flex-grow p-4 overflow-y-auto space-y-1.5 bg-black/10">
-                {consoleOutput.length === 0 ? (
-                  <span className="text-gray-600">
-                    Terminal ready. Click 'Run Code' or 'Submit Code' to compile and execute.
-                  </span>
-                ) : (
-                  consoleOutput.map((line, i) => (
-                    <div
-                      key={i}
-                      className={
-                        line.startsWith("✓") || line.startsWith("🎉")
-                          ? "text-emerald-400 font-semibold"
-                          : line.startsWith("✗") || line.startsWith("❌")
-                          ? "text-rose-400 font-semibold"
-                          : line.startsWith("Compiling")
-                          ? "text-[var(--accent-primary)]"
-                          : "text-gray-400"
-                      }
-                      style={{ whiteSpace: "pre-wrap" }}
-                    >
-                      {line}
+              ) : (
+                <div className="flex-grow p-4 overflow-y-auto space-y-2 bg-[#0f0f11]/80 select-text custom-scrollbar">
+                  {consoleOutput.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-gray-500 gap-1.5">
+                      <svg className="w-5 h-5 opacity-40 animate-pulse text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="4 17 10 11 4 5" />
+                        <line x1="12" y1="19" x2="20" y2="19" />
+                      </svg>
+                      <span className="text-[11px] font-sans">
+                        Console ready. Click 'Run Code' or 'Submit Code' to execute.
+                      </span>
                     </div>
-                  ))
-                )}
-              </div>
+                  ) : (
+                    <div className="space-y-1">
+                      {consoleOutput.map((line, i) => {
+                        let isSuccess = line.startsWith("✓") || line.startsWith("🎉") || line.includes("ACCEPTED") || line.includes("Success");
+                        let isError = line.startsWith("✗") || line.startsWith("❌") || line.includes("Failed") || line.includes("Error");
+
+                        return (
+                          <div
+                            key={i}
+                            className={
+                              isSuccess
+                                ? "text-emerald-400 font-semibold py-0.5"
+                                : isError
+                                  ? "text-rose-400 font-semibold py-0.5"
+                                  : line.startsWith("Compiling") || line.startsWith("Submission Status:")
+                                    ? "text-cyan-400 font-bold"
+                                    : "text-gray-300"
+                            }
+                            style={{ whiteSpace: "pre-wrap" }}
+                          >
+                            {line}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* Right pane: Interview simulator grid (3/12 cols) */}
-        <div className="lg:col-span-3 flex flex-col h-full bg-[#080d1a] p-4 space-y-4 justify-between min-h-0">
+        <div className="lg:col-span-3 border border-surface-border rounded-xl flex flex-col bg-[#080d1a] p-4 space-y-4 justify-between lg:h-[750px] overflow-hidden shadow-lg">
           <div className="space-y-4 overflow-hidden flex flex-col flex-grow min-h-0">
             {/* Interviewer avatar container */}
             <Card className="p-3 bg-surface-solid border-surface-border shrink-0 flex items-center gap-3">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-white relative ${
-                stressActive ? "bg-rose-950 border border-rose-500 danger-glow" : "bg-[var(--accent-glow)] border border-[var(--accent-primary)]/45"
-              }`}>
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-white relative ${stressActive ? "bg-rose-950 border border-rose-500 danger-glow" : "bg-[var(--accent-glow)] border border-[var(--accent-primary)]/45"
+                }`}>
                 {activePersona[0]}
                 {/* Live online indicator */}
                 <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-surface-solid bg-emerald-500" />
@@ -818,13 +998,12 @@ export const PracticeWorkspace: React.FC = () => {
                 {chatLog.map((chat, i) => (
                   <div
                     key={i}
-                    className={`space-y-1.5 p-2.5 rounded-lg ${
-                      chat.speaker === "Candidate"
+                    className={`space-y-1.5 p-2.5 rounded-lg ${chat.speaker === "Candidate"
                         ? "bg-white/5 border border-white/5"
                         : chat.speaker.includes("Interviewer")
-                        ? "bg-[var(--accent-glow)]/40 border border-[var(--accent-primary)]/15"
-                        : "bg-rose-950/10 border border-rose-500/15 danger-glow"
-                    }`}
+                          ? "bg-[var(--accent-glow)]/40 border border-[var(--accent-primary)]/15"
+                          : "bg-rose-950/10 border border-rose-500/15 danger-glow"
+                      }`}
                   >
                     <div className="flex justify-between items-center text-[10px] font-mono">
                       <span className={chat.speaker === "Candidate" ? "text-[var(--accent-primary)] font-bold" : "text-amber-400 font-bold"}>
@@ -914,7 +1093,7 @@ export const PracticeWorkspace: React.FC = () => {
                       if (data.success) {
                         setChatLog((prev) => [...prev, { speaker: `Interviewer (${activePersona})`, text: data.data.response, time: formatTime(timeLeft) }]);
                       }
-                    } catch (e) {}
+                    } catch (e) { }
                   })();
                 }}
                 className="text-[10px] bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/40 border border-indigo-500/30 px-2 py-1 rounded transition-colors"
@@ -934,7 +1113,7 @@ export const PracticeWorkspace: React.FC = () => {
                       if (data.success) {
                         setChatLog((prev) => [...prev, { speaker: `Interviewer (${activePersona})`, text: data.data.response, time: formatTime(timeLeft) }]);
                       }
-                    } catch (e) {}
+                    } catch (e) { }
                   })();
                 }}
                 className="text-[10px] bg-rose-500/20 text-rose-300 hover:bg-rose-500/40 border border-rose-500/30 px-2 py-1 rounded transition-colors"
@@ -954,7 +1133,7 @@ export const PracticeWorkspace: React.FC = () => {
                       if (data.success) {
                         setChatLog((prev) => [...prev, { speaker: `Interviewer (${activePersona})`, text: data.data.response, time: formatTime(timeLeft) }]);
                       }
-                    } catch (e) {}
+                    } catch (e) { }
                   })();
                 }}
                 className="text-[10px] bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/40 border border-emerald-500/30 px-2 py-1 rounded transition-colors"

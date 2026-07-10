@@ -5,6 +5,7 @@ import { apiFetch } from "../../../utils/apiFetch";
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
 import { ProgressBar } from "../../../components/ui/ProgressBar";
+import { useQuery } from "@tanstack/react-query";
 import {
   Play,
   Pause,
@@ -19,7 +20,17 @@ import {
 
 export const EvaluationReport: React.FC = () => {
   const navigate = useNavigate();
-  const { currentEvaluation, currentEvaluationId, setCurrentEvaluation, setCurrentEvaluationId, history } = useApp() as any;
+  const { currentEvaluation, currentEvaluationId, setCurrentEvaluation, setCurrentEvaluationId, history, setActiveChallenge } = useApp() as any;
+
+  const { data: seriesData } = useQuery({
+    queryKey: ["questions", "sets"],
+    queryFn: async () => {
+      const res = await apiFetch("/questions/sets");
+      const data = await res.json();
+      if (res.ok && data.success) return data.data.sets;
+      return null;
+    },
+  });
 
   // All hook declarations first (Unconditional)
   const [localSession, setLocalSession] = useState<InterviewSession | null>(currentEvaluation);
@@ -118,6 +129,19 @@ export const EvaluationReport: React.FC = () => {
                   key={session.id || idx}
                   onClick={() => {
                     if (setCurrentEvaluationId) setCurrentEvaluationId(session.id);
+                    if (seriesData && setActiveChallenge) {
+                      const allQuestions = [
+                        ...(seriesData.set1 || []),
+                        ...(seriesData.set2 || []),
+                        ...(seriesData.set3 || []),
+                      ];
+                      const matched = allQuestions.find(
+                        (q: any) => q.title === session.company || q.id === session.company
+                      );
+                      if (matched) {
+                        setActiveChallenge(matched);
+                      }
+                    }
                   }}
                   className="flex flex-col md:flex-row md:items-center justify-between p-6 bg-surface-solid border-surface-border hover:border-[var(--accent-primary)]/40 hover:bg-white/5 transition-all cursor-pointer group"
                 >
@@ -234,19 +258,6 @@ export const EvaluationReport: React.FC = () => {
       {/* Header controls */}
       <div className="flex items-center justify-between gap-4 mb-4">
         <div className="flex items-center gap-4">
-          <button
-            onClick={() => {
-              if (setCurrentEvaluationId) {
-                setCurrentEvaluationId(null);
-              } else {
-                navigate("/dashboard");
-              }
-            }}
-            className="p-2 rounded-lg bg-[rgba(255,255,255,0.03)] border border-[var(--surface-border-new)] text-gray-400 hover:text-[var(--accent-primary)] hover:bg-white/5 transition-all"
-            title="Back to Reports History"
-          >
-            <ArrowLeft size={18} />
-          </button>
           <div>
             <h2 className="text-lg font-bold text-white m-0">Performance Review</h2>
             <p className="text-gray-400 mt-0.5 text-xs m-0">

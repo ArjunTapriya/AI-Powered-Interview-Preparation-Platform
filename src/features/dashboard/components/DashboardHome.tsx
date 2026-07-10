@@ -548,7 +548,7 @@ export const DashboardHome: React.FC = () => {
               View All Series <ChevronRight size={12} />
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto custom-scrollbar-new pr-2">
+          <div className="flex-1 pr-2">
             <QuestionSeriesList />
           </div>
         </div>
@@ -637,7 +637,7 @@ export const DashboardHome: React.FC = () => {
               All Reports <ChevronRight size={12} />
             </button>
           </div>
-          <div className="flex flex-col gap-4 flex-1 overflow-y-auto custom-scrollbar-new">
+          <div className="flex flex-col gap-4 flex-1">
             {history && history.length > 0 ? history.slice(0, 3).map((session: any, i: number) => {
               const score = session.overallScore !== undefined ? session.overallScore : (session.score !== undefined ? session.score : 0);
               const duration = session.durationMin !== undefined ? session.durationMin : (session.duration !== undefined ? session.duration : 0);

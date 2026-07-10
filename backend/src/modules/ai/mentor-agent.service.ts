@@ -98,6 +98,85 @@ ${currentCode}
       conversationId: context.conversationId,
     };
   }
+  /**
+   * Streaming version — yields text tokens as they arrive and saves the
+   * full response to the DB once the stream is complete.
+   */
+  async *getMentorResponseStream(
+    userId: string,
+    interviewSessionId: string,
+    questionId: string,
+    userMessage: string,
+    currentCode: string,
+    mode: "hint" | "debug" | "test-case" | "complexity" | "general" = "general",
+    errorLogs?: string
+  ): AsyncGenerator<string> {
+    const context = await aiContextBuilderService.buildContext(userId, interviewSessionId, questionId);
+
+    await conversationRepository.addMessage({
+      conversationId: context.conversationId,
+      role: "user",
+      content: userMessage,
+    });
+
+    let modeSpecificInstructions = "";
+    switch (mode) {
+      case "hint":
+        modeSpecificInstructions = "You are in HINT MODE. Provide a small, progressive hint without giving away the exact code. Ask a leading question.";
+        break;
+      case "debug":
+        modeSpecificInstructions = `You are in DEBUG MODE. Analyze the user's code and point out likely runtime or syntax errors.\nError Logs: ${errorLogs || "None"}`;
+        break;
+      case "test-case":
+        modeSpecificInstructions = "You are in TEST CASE ANALYSIS MODE. Review the execution history and explain why the code fails on specific edge cases.";
+        break;
+      case "complexity":
+        modeSpecificInstructions = "You are in COMPLEXITY ANALYSIS MODE. Analyze the Time and Space Complexity. Suggest optimizations.";
+        break;
+      default:
+        modeSpecificInstructions = "Answer the user's query normally, preferring hints over direct answers.";
+    }
+
+    const systemPrompt = `You are an expert AI Coding Mentor named "Interview Mentor".
+Your goal is to guide the user to the correct solution without giving away the direct answer immediately.
+RULES:
+1. Encourage independent thinking.
+2. Keep your responses concise, encouraging, and highly technical.
+3. You are speaking to a software engineering candidate.
+4. Use markdown formatting for code snippets.
+
+${modeSpecificInstructions}
+
+${context.executionHistoryContext}
+
+Current Code in Editor:
+\`\`\`
+${currentCode}
+\`\`\`
+`;
+
+    const provider = this.getProvider();
+    let fullResponse = "";
+
+    try {
+      for await (const token of provider.chatStream(systemPrompt, userMessage)) {
+        fullResponse += token;
+        yield token;
+      }
+    } catch (err: any) {
+      logger.error("Mentor streaming agent failed", { error: err.message });
+      throw new Error("AI Mentor streaming is currently unavailable.");
+    }
+
+    // Persist the complete response after streaming
+    if (fullResponse) {
+      await conversationRepository.addMessage({
+        conversationId: context.conversationId,
+        role: "assistant",
+        content: fullResponse,
+      });
+    }
+  }
 }
 
 export const mentorAgentService = new MentorAgentService();

@@ -69,9 +69,9 @@ export const QuestionSeriesPage: React.FC = () => {
         <p className="text-gray-400 text-sm">{info.desc}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+      <div className="flex flex-col gap-3 mt-8">
         {questions.length === 0 && (
-          <div className="col-span-full text-center text-gray-500 py-12 bg-[#1e1e1e] rounded-xl border border-gray-800">
+          <div className="text-center text-gray-500 py-12 bg-[#1e1e1e] rounded-xl border border-gray-800">
             No questions found in this series yet.
           </div>
         )}
@@ -80,46 +80,76 @@ export const QuestionSeriesPage: React.FC = () => {
           return (
             <div
               key={q.id}
-              className={`flex flex-col bg-[#1e1e1e] rounded-xl border ${completed ? 'border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'border-gray-800'} overflow-hidden shadow-lg transition-all hover:border-gray-600 group`}
+              onClick={() => {
+                setActiveChallenge(q);
+                navigate("/workspace");
+              }}
+              className={`flex flex-col sm:flex-row sm:items-center justify-between bg-[#19191c] rounded-xl border ${
+                completed 
+                  ? 'border-emerald-500/25 bg-emerald-950/5 hover:border-emerald-500/40' 
+                  : 'border-gray-800/80 hover:border-gray-700 hover:bg-[#1f1f23]'
+              } px-6 py-4 transition-all duration-200 cursor-pointer group shadow-md gap-4`}
             >
-              <div className="p-5 flex-1 flex flex-col text-left">
-                <div className="flex justify-between items-start mb-3">
-                  <div
-                    className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
+              {/* Left section: status check, title and short description */}
+              <div className="flex items-start sm:items-center gap-4 flex-grow min-w-0 text-left">
+                {/* Completion Checkbox Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation(); // prevent navigating when toggling completed
+                    toggleManualQuestion(q.id, !completed);
+                  }}
+                  className={`p-2 rounded-lg transition-all border shrink-0 ${
+                    completed 
+                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" 
+                      : "bg-white/5 text-gray-500 border-transparent hover:text-gray-300 hover:bg-white/10"
+                  }`}
+                  title={completed ? "Mark as Incomplete" : "Mark as Completed"}
+                >
+                  <CheckCircle2 size={18} className={completed ? "fill-emerald-500/10" : ""} />
+                </button>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-3 mb-1 flex-wrap">
+                    <span className="text-sm font-mono text-gray-500 font-semibold">{idx + 1}.</span>
+                    <h3 className="text-base font-bold text-gray-200 group-hover:text-white transition-colors truncate">
+                      {q.title}
+                    </h3>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                       q.difficulty === "Hard"
-                        ? "bg-rose-500/10 text-rose-400"
+                        ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
                         : q.difficulty === "Medium"
-                        ? "bg-amber-500/10 text-amber-400"
-                        : "bg-emerald-500/10 text-emerald-400"
-                    }`}
-                  >
-                    {q.difficulty}
+                        ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                        : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                    }`}>
+                      {q.difficulty}
+                    </span>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleManualQuestion(q.id, !completed);
-                    }}
-                    className={`p-1.5 rounded-full transition-colors ${completed ? "bg-emerald-500/20 text-emerald-500" : "bg-white/5 text-gray-500 hover:text-white hover:bg-white/10"}`}
-                  >
-                    <CheckCircle2 size={18} />
-                  </button>
+                  {/* Clean shortened description */}
+                  <p className="text-xs text-gray-400 line-clamp-1 truncate max-w-3xl">
+                    {q.description ? q.description.replace(/&[a-z0-9#]+;/gi, ' ').replace(/\s+/g, ' ').substring(0, 150) : "No description provided."}
+                  </p>
                 </div>
-                <h3 className="text-lg font-bold text-gray-200 mb-2 leading-tight">
-                  {idx + 1}. {q.title}
-                </h3>
-                <p className="text-sm text-gray-400 line-clamp-3 mb-4 flex-1">
-                  {q.description || "No description provided."}
-                </p>
+              </div>
+
+              {/* Right section: solve button and actions */}
+              <div className="flex items-center gap-3 shrink-0 justify-end">
+                {completed && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    Completed
+                  </span>
+                )}
+                
                 <Button
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setActiveChallenge(q);
                     navigate("/workspace");
                   }}
                   variant="secondary"
-                  className="w-full mt-auto group-hover:bg-[var(--accent-primary)] group-hover:text-white group-hover:border-[var(--accent-primary)] transition-colors"
+                  size="sm"
+                  className="px-4 py-1.5 text-xs font-semibold bg-white/5 border border-white/10 text-gray-300 group-hover:bg-[var(--accent-primary)] group-hover:text-white group-hover:border-[var(--accent-primary)] transition-all duration-200 flex items-center gap-1.5"
                 >
-                  <Play size={14} className="mr-2" /> Solve Challenge
+                  <Play size={12} className="fill-current" /> Solve
                 </Button>
               </div>
             </div>
