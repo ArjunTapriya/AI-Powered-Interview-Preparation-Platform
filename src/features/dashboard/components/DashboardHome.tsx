@@ -502,13 +502,10 @@ export const DashboardHome: React.FC = () => {
         
         {/* Core Skill Diagnostics */}
         <div className="new-card p-6 lg:col-span-2 flex flex-col">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center mb-4">
             <h3 className="text-[15px] font-bold text-white flex items-center gap-2">
               <Sparkles size={16} className="text-[var(--accent-purple)]" /> Core Skill Diagnostics
             </h3>
-            <button className="text-[10px] text-[var(--text-secondary-new)] hover:text-white flex items-center gap-1 transition-colors">
-              View Details <ChevronRight size={12} />
-            </button>
           </div>
           <p className="text-[11px] text-[var(--text-secondary-new)] mb-2">Calculated across your practice and diagnostic logs.</p>
           
@@ -542,11 +539,8 @@ export const DashboardHome: React.FC = () => {
 
         {/* Question Series */}
         <div className="new-card p-6 lg:col-span-3 flex flex-col">
-          <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center mb-5">
             <h3 className="text-[16px] font-bold text-white">Question Series For You</h3>
-            <button className="text-[10px] text-[var(--text-secondary-new)] hover:text-white flex items-center gap-1 transition-colors px-3 py-1.5 rounded-full border border-[var(--surface-border-new)] bg-[rgba(255,255,255,0.02)]">
-              View All Series <ChevronRight size={12} />
-            </button>
           </div>
           <div className="flex-1 pr-2">
             <QuestionSeriesList />

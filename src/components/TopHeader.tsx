@@ -1,14 +1,49 @@
-import React from "react";
+import React, { useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useApp } from "../store/AppContext";
 import { Zap, Moon, Sun, Bell, Settings, Sparkles, ChevronLeft } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "../utils/apiFetch";
 
+/* ── Cursor-reactive pill ─────────────────────────────────── */
+const GlowPill: React.FC<{
+  children: React.ReactNode;
+  color?: string;
+  className?: string;
+  onClick?: () => void;
+}> = ({ children, color = "249, 115, 22", className = "", onClick }) => {
+  const ref = useRef<HTMLDivElement>(null);
+
+  const onMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    el.style.setProperty("--mouse-x", `${x}%`);
+    el.style.setProperty("--mouse-y", `${y}%`);
+  }, []);
+
+  const Tag: any = onClick ? "button" : "div";
+
+  return (
+    <Tag
+      ref={ref as any}
+      onMouseMove={onMouseMove}
+      onClick={onClick}
+      className={`cursor-glow-card ${className}`}
+      style={{ "--accent-rgb": color, "--mouse-x": "50%", "--mouse-y": "50%" } as React.CSSProperties}
+    >
+      {children}
+    </Tag>
+  );
+};
+
 export const TopHeader: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, streak, themeAccent, setThemeAccent, themeMode, setThemeMode, activeChallenge, currentEvaluationId, history } = useApp() as any;
+  const { user, streak, themeAccent, setThemeAccent, themeMode, setThemeMode, activeChallenge } =
+    useApp() as any;
 
   const hiddenRoutes = ["/", "/auth", "/onboarding"];
   if (hiddenRoutes.includes(location.pathname)) return null;
@@ -24,113 +59,169 @@ export const TopHeader: React.FC = () => {
   });
 
   const getSeriesId = () => {
-    const isTargetPage = location.pathname.startsWith("/workspace") || location.pathname.startsWith("/evaluation");
-    if (!isTargetPage || !seriesData) return null;
-
-    if (activeChallenge) {
-      const challengeId = activeChallenge.id;
-      if (seriesData.set1?.some((q: any) => q.id === challengeId)) return "1";
-      if (seriesData.set2?.some((q: any) => q.id === challengeId)) return "2";
-      if (seriesData.set3?.some((q: any) => q.id === challengeId)) return "3";
-    }
-
-    if (location.pathname.startsWith("/evaluation") && currentEvaluationId && history) {
-      const session = history.find((s: any) => s.id === currentEvaluationId);
-      if (session) {
-        const matchTitle = (q: any) => q.title === session.company || q.id === session.company;
-        if (seriesData.set1?.some(matchTitle)) return "1";
-        if (seriesData.set2?.some(matchTitle)) return "2";
-        if (seriesData.set3?.some(matchTitle)) return "3";
-      }
-    }
-
+    const isWorkspace = location.pathname.startsWith("/workspace");
+    if (!isWorkspace || !seriesData || !activeChallenge) return null;
+    const challengeId = activeChallenge.id;
+    if (seriesData.set1?.some((q: any) => q.id === challengeId)) return "1";
+    if (seriesData.set2?.some((q: any) => q.id === challengeId)) return "2";
+    if (seriesData.set3?.some((q: any) => q.id === challengeId)) return "3";
     return null;
   };
 
   const seriesId = getSeriesId();
 
   const getTitle = () => {
-    if (location.pathname.startsWith("/dashboard")) return "Dashboard ✨";
-    if (location.pathname.startsWith("/roadmap")) return "Roadmap Planner";
+    if (location.pathname.startsWith("/dashboard"))         return "Dashboard";
+    if (location.pathname.startsWith("/roadmap"))           return "Roadmap Planner";
     if (location.pathname.startsWith("/interview-practice")) return "Mock Interviews";
-    if (location.pathname.startsWith("/resume")) return "Resume Intelligence";
-    if (location.pathname.startsWith("/admin")) return "Admin Panel";
-    if (location.pathname.startsWith("/series")) return "Question Series";
-    if (location.pathname.startsWith("/ai-feedback")) return "AI Feedback";
-    if (location.pathname.startsWith("/notes")) return "Notes and Resources";
-    if (location.pathname.startsWith("/evaluation")) return "Evaluation History";
+    if (location.pathname.startsWith("/resume"))             return "Resume Intelligence";
+    if (location.pathname.startsWith("/admin"))              return "Admin Panel";
+    if (location.pathname.startsWith("/series"))             return "Question Series";
+    if (location.pathname.startsWith("/ai-feedback"))        return "AI Feedback";
+    if (location.pathname.startsWith("/notes"))              return "Notes and Resources";
+    if (location.pathname.startsWith("/evaluation"))         return "Evaluation History";
     return "Dashboard";
   };
 
+  const getEmoji = () => {
+    if (location.pathname.startsWith("/dashboard"))          return "✨";
+    if (location.pathname.startsWith("/notes"))              return "📚";
+    if (location.pathname.startsWith("/interview-practice")) return "🎙️";
+    if (location.pathname.startsWith("/resume"))             return "📄";
+    if (location.pathname.startsWith("/ai-feedback"))        return "🤖";
+    if (location.pathname.startsWith("/roadmap"))            return "🗺️";
+    return "";
+  };
+
   return (
-    <header className="flex items-start justify-between px-8 py-6 w-full">
+    <header
+      className="sticky top-0 z-30 flex items-center justify-between px-8 py-4 w-full"
+      style={{
+        background: "rgba(5,5,7,0.85)",
+        backdropFilter: "blur(20px)",
+        borderBottom: "1px solid rgba(255,255,255,0.03)",
+        boxShadow: "0 1px 0 rgba(255,255,255,0.02), 0 4px 24px rgba(0,0,0,0.3)",
+      }}
+    >
+      {/* ── Left: Title ── */}
       <div className="flex flex-col">
-        <h1 className="text-[28px] font-bold text-white tracking-tight mb-1 flex items-center gap-2">
-          {seriesId ? (
-            <button
-              onClick={() => navigate(`/series/${seriesId}`)}
-              className="hover:text-[var(--accent-primary)] transition-all flex items-center gap-1.5 text-[28px] font-bold text-white bg-transparent border-none p-0 cursor-pointer text-left group"
-            >
-              <ChevronLeft className="w-7 h-7 text-gray-400 group-hover:text-[var(--accent-primary)] transition-colors" />
-              Question Series
-            </button>
-          ) : (
-            getTitle()
-          )}
-          {location.pathname.startsWith("/notes") && (
-            <Sparkles className="text-[var(--accent-purple)] w-6 h-6 animate-pulse" />
-          )}
-        </h1>
+        {seriesId ? (
+          <button
+            onClick={() => navigate(`/series/${seriesId}`)}
+            className="group flex items-center gap-1.5 text-[24px] font-bold text-white hover:text-[var(--accent-primary)] transition-colors"
+          >
+            <ChevronLeft className="w-6 h-6 text-gray-500 group-hover:text-[var(--accent-primary)] group-hover:-translate-x-0.5 transition-all duration-200" />
+            Question Series
+          </button>
+        ) : (
+          <div className="flex items-center gap-2">
+            <h1 className="text-[24px] font-bold text-white tracking-tight">
+              {getTitle()}
+            </h1>
+            {getEmoji() && (
+              <span className="float-gentle text-xl">{getEmoji()}</span>
+            )}
+            {location.pathname.startsWith("/notes") && (
+              <Sparkles className="text-[var(--accent-purple)] w-5 h-5 animate-pulse" />
+            )}
+          </div>
+        )}
+        {/* Animated underline */}
+        <div
+          className="h-[2px] mt-1 rounded-full transition-all duration-500"
+          style={{
+            width: "100%",
+            background: "linear-gradient(90deg, rgba(249,115,22,0.7), rgba(139,92,246,0.5), transparent)",
+            animation: "gradient-shift 4s ease infinite",
+            backgroundSize: "200% 100%",
+          }}
+        />
       </div>
 
-      <div className="flex items-center gap-4">
+      {/* ── Right: Controls ── */}
+      <div className="flex items-center gap-3">
+
         {/* Streak Pill */}
-        <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[var(--accent-orange)] text-[var(--accent-orange)] font-bold text-xs uppercase tracking-wider bg-[rgba(249,115,22,0.05)] cursor-default shadow-[0_0_10px_rgba(249,115,22,0.15)]">
-          <Zap size={14} className="fill-current" />
-          {streak} DAY STREAK
-        </div>
+        <GlowPill
+          color="249, 115, 22"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-xs font-bold uppercase tracking-wider transition-all duration-300"
+          style={{
+            borderColor: "rgba(249,115,22,0.35)",
+            color: "#F97316",
+            background: "rgba(249,115,22,0.06)",
+            boxShadow: "0 0 12px rgba(249,115,22,0.15)",
+          } as any}
+        >
+          <Zap size={13} className="fill-current" />
+          {streak} Day Streak
+        </GlowPill>
 
         {/* Subscription Pill */}
-        <button
+        <GlowPill
+          color="139, 92, 246"
           onClick={() => navigate("/pricing")}
-          className="px-4 py-1.5 rounded-full border border-[#8B5CF6]/40 text-[#8B5CF6] font-bold text-xs uppercase tracking-wider bg-[#8B5CF6]/5 hover:bg-[#8B5CF6]/10 transition-colors"
+          className="px-4 py-1.5 rounded-full border text-xs font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer"
+          style={{
+            borderColor: "rgba(139,92,246,0.35)",
+            color: "#8B5CF6",
+            background: "rgba(139,92,246,0.06)",
+          } as any}
         >
           {user?.subscriptionTier || "FREE"}
-        </button>
+        </GlowPill>
 
-        {/* Theme Dropdown & Light Mode */}
-        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[var(--surface-border-new)] bg-[rgba(255,255,255,0.02)] transition-colors">
-          <button 
+        {/* Theme Controls */}
+        <div
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-300 cursor-glow-card"
+          style={{
+            borderColor: "rgba(255,255,255,0.06)",
+            background: "rgba(255,255,255,0.02)",
+            "--accent-rgb": "249, 115, 22",
+            "--mouse-x": "50%",
+            "--mouse-y": "50%",
+          } as React.CSSProperties}
+        >
+          <button
             onClick={() => setThemeMode(themeMode === "light" ? "dark" : "light")}
-            className="text-[var(--text-secondary-new)] hover:text-[var(--accent-primary)] transition-colors"
+            className="text-gray-500 hover:text-[var(--accent-primary)] transition-colors hover:scale-110 transition-transform duration-200"
             title="Toggle Light/Dark Mode"
           >
-            {themeMode === "light" ? <Sun size={14} /> : <Moon size={14} />}
+            {themeMode === "light" ? <Sun size={13} /> : <Moon size={13} />}
           </button>
+          <div className="w-px h-3 bg-white/10" />
           <select
             value={themeAccent}
             onChange={(e) => setThemeAccent(e.target.value as any)}
-            className="bg-transparent text-xs font-semibold text-[var(--text-secondary-new)] outline-none cursor-pointer appearance-none"
+            className="bg-transparent text-[11px] font-semibold text-gray-500 outline-none cursor-pointer appearance-none hover:text-white transition-colors"
           >
-            <option value="orange" className="bg-surface-solid">Theme</option>
-            <option value="orange" className="bg-surface-solid">Orange (Vibrant)</option>
-            <option value="coral" className="bg-surface-solid">Coral (TakeUForward)</option>
-            <option value="amber" className="bg-surface-solid">Amber (Golden)</option>
-            <option value="rust" className="bg-surface-solid">Rust (Deep)</option>
-            <option value="sunset" className="bg-surface-solid">Sunset (Red-Orange)</option>
+            <option value="orange" className="bg-[#0A0A0A]">Orange</option>
+            <option value="coral"  className="bg-[#0A0A0A]">Coral</option>
+            <option value="amber"  className="bg-[#0A0A0A]">Amber</option>
+            <option value="rust"   className="bg-[#0A0A0A]">Rust</option>
+            <option value="sunset" className="bg-[#0A0A0A]">Sunset</option>
           </select>
         </div>
 
-        {/* Icons */}
-        <div className="flex items-center gap-4 ml-2 border-l border-[var(--surface-border-new)] pl-6">
-          <button className="text-[var(--text-secondary-new)] hover:text-white transition-colors relative">
-            <Bell size={18} />
-            <span className="absolute -top-1 -right-1 w-2 h-2 bg-[var(--accent-orange)] rounded-full"></span>
-          </button>
-          <button className="text-[var(--text-secondary-new)] hover:text-white transition-colors">
-            <Settings size={18} />
-          </button>
-        </div>
+        {/* Divider */}
+        <div className="h-6 w-px bg-white/[0.06]" />
+
+        {/* Icon buttons */}
+        <button
+          className="relative p-2 rounded-lg text-gray-500 hover:text-white hover:bg-white/[0.04] transition-all duration-200 group"
+          title="Notifications"
+        >
+          <Bell size={16} className="group-hover:scale-110 transition-transform duration-200" />
+          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-[#F97316] rounded-full shadow-[0_0_6px_rgba(249,115,22,0.8)]" />
+        </button>
+        <button
+          className="p-2 rounded-lg text-gray-500 hover:text-white hover:bg-white/[0.04] transition-all duration-200 group"
+          title="Settings"
+        >
+          <Settings
+            size={16}
+            className="group-hover:rotate-45 group-hover:scale-110 transition-all duration-300"
+          />
+        </button>
       </div>
     </header>
   );

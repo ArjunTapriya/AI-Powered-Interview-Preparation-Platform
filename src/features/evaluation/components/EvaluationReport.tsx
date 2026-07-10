@@ -13,7 +13,6 @@ import {
   FileCode,
   MessageSquare,
   Award,
-  ArrowLeft,
   TrendingUp,
   ChevronRight
 } from "lucide-react";
@@ -104,14 +103,7 @@ export const EvaluationReport: React.FC = () => {
   // If no report ID is selected, show the history list representation
   if (!currentEvaluationId) {
     return (
-      <div className="space-y-6 animate-fadeIn max-w-5xl mx-auto px-4 pt-0 pb-6 text-left">
-        <button
-          onClick={() => navigate("/dashboard")}
-          className="p-2 rounded-lg bg-[rgba(255,255,255,0.03)] border border-[var(--surface-border-new)] text-gray-400 hover:text-[var(--accent-primary)] hover:bg-white/5 transition-all mb-4"
-          title="Back to Dashboard"
-        >
-          <ArrowLeft size={18} />
-        </button>
+      <div className="w-full animate-fadeIn px-4 pt-0 pb-6 text-left">
 
         <div className="grid grid-cols-1 gap-4">
           {history && history.length > 0 ? (
@@ -254,7 +246,7 @@ export const EvaluationReport: React.FC = () => {
   const activeTranscriptIdx = getActiveTranscriptIndex();
 
   return (
-    <div className="space-y-6 animate-fadeIn max-w-7xl mx-auto px-4 pt-0 pb-6 text-left">
+    <div className="w-full space-y-6 animate-fadeIn px-4 pt-0 pb-6 text-left">
       {/* Header controls */}
       <div className="flex items-center justify-between gap-4 mb-4">
         <div className="flex items-center gap-4">

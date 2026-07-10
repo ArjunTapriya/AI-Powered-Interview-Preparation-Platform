@@ -53,7 +53,67 @@ body {
   border: 1px solid var(--surface-border-new);
   border-radius: 1rem;
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 400ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 400ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
+  --mouse-x: 50%;
+  --mouse-y: 50%;
+  --accent-rgb: 249, 115, 22;
 }
+
+/* Cursor spotlight layer */
+.new-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: radial-gradient(
+    500px circle at var(--mouse-x) var(--mouse-y),
+    rgba(var(--accent-rgb), 0.08),
+    transparent 55%
+  );
+  border-radius: inherit;
+  transition: opacity 350ms ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.new-card:hover::before {
+  opacity: 1;
+}
+
+.new-card:hover {
+  border-color: rgba(var(--accent-rgb), 0.18);
+  box-shadow: 0 14px 40px -8px rgba(0, 0, 0, 0.65),
+              0 0 0 1px rgba(var(--accent-rgb), 0.06);
+  transform: translateY(-2px);
+}
+
+/* All direct children sit above the spotlight layer */
+.new-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Shimmer shine effect on hover */
+.new-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.025), transparent);
+  transform: translateX(-100%) skewX(-15deg);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.new-card:hover::after {
+  animation: shimmer-slide 0.9s ease forwards;
+}
+
 
 .new-sidebar {
   background-color: var(--surface-solid-new);

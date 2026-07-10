@@ -16,7 +16,6 @@ import {
   AlertTriangle,
   Award,
   RefreshCw,
-  ArrowLeft,
   ArrowRight,
   Download
 } from "lucide-react";
@@ -757,16 +756,7 @@ AI Summary: ${summaryText}`;
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 pt-0 pb-8 text-left animate-fadeIn">
-      {/* Back button or Dashboard navigate header */}
-      <button
-        onClick={() => navigate("/dashboard")}
-        className="p-2 rounded-lg bg-[rgba(255,255,255,0.03)] border border-[var(--surface-border-new)] text-gray-400 hover:text-[var(--accent-primary)] hover:bg-white/5 transition-all mb-6"
-        title="Back to Dashboard"
-      >
-        <ArrowLeft size={18} />
-      </button>
-
+    <div className="w-full px-4 pt-0 pb-8 text-left animate-fadeIn">
       {/* STEP 1: SETUP SCREEN */}
       {step === "setup" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
