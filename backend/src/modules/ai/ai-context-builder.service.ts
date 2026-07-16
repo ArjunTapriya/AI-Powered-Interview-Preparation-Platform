@@ -1,5 +1,6 @@
 import { executionRepository } from "../code-execution/execution.repository";
 import { conversationRepository } from "../conversations/conversation.repository";
+import { questionsRepository } from "../questions/questions.repository";
 
 export class AiContextBuilderService {
   /**
@@ -13,8 +14,16 @@ export class AiContextBuilderService {
     // 2. Get Code Submissions (Last 3)
     const { submissions } = await executionRepository.findSubmissions(userId, { questionId, limit: 3 });
     
-    // 3. Format Submissions
+    // 3. Get Question Statement
+    const question = await questionsRepository.findById(questionId);
+
+    // 4. Format Context
     let executionHistoryContext = "";
+    
+    if (question) {
+      executionHistoryContext += `--- PROBLEM STATEMENT ---\nTitle: ${question.title}\nDescription: ${question.problemStatement}\n\n`;
+    }
+
     if (submissions && submissions.length > 0) {
       executionHistoryContext = "\n--- RECENT CODE SUBMISSIONS ---\n";
       submissions.reverse().forEach((sub, index) => {

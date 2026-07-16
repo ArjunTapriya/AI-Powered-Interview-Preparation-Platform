@@ -532,10 +532,209 @@ function getDriverCode(questionTitle: string, language: string, userCode: string
     }
   }
 
+  // ─── Available Captures for Rook (Chess board grid) ──────────────────────
+  if (title.includes("available captures for rook") || title.includes("rook")) {
+    if (language === "javascript") {
+      return `${userCode}\n\n` +
+        `const fs = require('fs');\n` +
+        `const raw = fs.readFileSync(0, 'utf-8').trim();\n` +
+        `// Input: 8 lines of 8 chars each (e.g. "........\\n........\\n...")\n` +
+        `const lines = raw.split(/\\n/).map(l => l.trim()).filter(l => l.length > 0);\n` +
+        `const board = lines.slice(0, 8).map(row => row.split(''));\n` +
+        `console.log(solveQuestion(board));\n`;
+    }
+    if (language === "python") {
+      return `${userCode}\n\n` +
+        `import sys\n` +
+        `lines = [l.strip() for l in sys.stdin.read().split('\\n') if l.strip()]\n` +
+        `board = [list(row) for row in lines[:8]]\n` +
+        `print(solveQuestion(board))\n`;
+    }
+    if (language === "cpp") {
+      return `#include <iostream>\n` +
+        `#include <vector>\n` +
+        `#include <string>\n` +
+        `using namespace std;\n\n` +
+        `${userCode}\n\n` +
+        `int main() {\n` +
+        `    vector<vector<char>> board(8, vector<char>(8, '.'));\n` +
+        `    for (int i = 0; i < 8; i++) {\n` +
+        `        string row;\n` +
+        `        if (getline(cin, row)) {\n` +
+        `            for (int j = 0; j < 8 && j < (int)row.size(); j++) board[i][j] = row[j];\n` +
+        `        }\n` +
+        `    }\n` +
+        `    cout << solveQuestion(board) << endl;\n` +
+        `    return 0;\n` +
+        `}`;
+    }
+    if (language === "java") {
+      return `import java.util.*;\n\n` +
+        `${userCode}\n\n` +
+        `public class Main {\n` +
+        `    public static void main(String[] args) {\n` +
+        `        Scanner sc = new Scanner(System.in);\n` +
+        `        char[][] board = new char[8][8];\n` +
+        `        for (char[] row : board) Arrays.fill(row, '.');\n` +
+        `        for (int i = 0; i < 8 && sc.hasNextLine(); i++) {\n` +
+        `            String row = sc.nextLine().trim();\n` +
+        `            for (int j = 0; j < row.length() && j < 8; j++) board[i][j] = row.charAt(j);\n` +
+        `        }\n` +
+        `        System.out.println(new Solution().solveQuestion(board));\n` +
+        `    }\n` +
+        `}`;
+    }
+  }
+
+  // ─── Generic Fallback Driver ──────────────────────────────────────────────
+  // Reads JSON array from stdin, spreads as arguments to solveQuestion(),
+  // and prints the JSON-serialised result. Works for most array/number problems
+  // where the user names their function solveQuestion(args...).
+  if (language === "javascript") {
+    return `${userCode}\n\n` +
+      `const fs = require('fs');\n` +
+      `const raw = fs.readFileSync(0, 'utf-8').trim();\n` +
+      `if (raw) {\n` +
+      `  try {\n` +
+      `    const parsed = JSON.parse(raw);\n` +
+      `    const args = Array.isArray(parsed) ? parsed : [parsed];\n` +
+      `    const result = solveQuestion(...args);\n` +
+      `    console.log(JSON.stringify(result));\n` +
+      `  } catch(e) {\n` +
+      `    // Plain text stdin fallback\n` +
+      `    const result = solveQuestion(raw);\n` +
+      `    console.log(JSON.stringify(result));\n` +
+      `  }\n` +
+      `}\n`;
+  }
+  if (language === "python") {
+    return `${userCode}\n\n` +
+      `import sys, json\n` +
+      `raw = sys.stdin.read().strip()\n` +
+      `if raw:\n` +
+      `    try:\n` +
+      `        parsed = json.loads(raw)\n` +
+      `        args = parsed if isinstance(parsed, list) else [parsed]\n` +
+      `        result = solveQuestion(*args)\n` +
+      `        print(json.dumps(result))\n` +
+      `    except Exception:\n` +
+      `        result = solveQuestion(raw)\n` +
+      `        print(json.dumps(result))\n`;
+  }
+  if (language === "cpp") {
+    return `#include <iostream>\n` +
+      `#include <string>\n` +
+      `using namespace std;\n\n` +
+      `${userCode}\n\n` +
+      `int main() {\n` +
+      `    string line;\n` +
+      `    getline(cin, line);\n` +
+      `    // Call with raw string — user-specific parsing inside solveQuestion\n` +
+      `    cout << solveQuestion(line) << endl;\n` +
+      `    return 0;\n` +
+      `}`;
+  }
+  if (language === "java") {
+    return `import java.util.*;\n\n` +
+      `${userCode}\n\n` +
+      `public class Main {\n` +
+      `    public static void main(String[] args) {\n` +
+      `        Scanner sc = new Scanner(System.in);\n` +
+      `        String input = sc.hasNextLine() ? sc.nextLine().trim() : "";\n` +
+      `        System.out.println(new Solution().solveQuestion(input));\n` +
+      `    }\n` +
+      `}`;
+  }
+
   return userCode;
 }
 
+
 export class ExecutionService {
+  // ──────────────────────────────────────────────────────────────────────────
+  // Piston API (FREE — no key required, no signup, unlimited runs)
+  // https://github.com/engineer-man/piston
+  // ──────────────────────────────────────────────────────────────────────────
+  private PISTON_URL = "https://emkc.org/api/v2/piston";
+
+  private getPistonLanguage(language: string): { language: string; version: string; filename: string } {
+    switch (language.toLowerCase()) {
+      case "javascript": return { language: "javascript", version: "18.15.0", filename: "solution.js" };
+      case "python":     return { language: "python",     version: "3.10.0",  filename: "solution.py" };
+      case "cpp":        return { language: "c++",        version: "10.2.0",  filename: "solution.cpp" };
+      case "java":       return { language: "java",       version: "15.0.2",  filename: "Solution.java" };
+      default:           return { language: "javascript", version: "18.15.0", filename: "solution.js" };
+    }
+  }
+
+  private async executeOnPiston(sourceCode: string, language: string, stdin: string): Promise<any> {
+    const lang = this.getPistonLanguage(language);
+    const payload = {
+      language: lang.language,
+      version: lang.version,
+      files: [{ name: lang.filename, content: sourceCode }],
+      stdin,
+      args: [],
+      compile_timeout: 10000,
+      run_timeout: 5000,
+    };
+
+    try {
+      const response = await fetch(`${this.PISTON_URL}/execute`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Piston API responded with ${response.status}: ${errText}`);
+      }
+
+      const result = (await response.json()) as any;
+      const run = result.run || {};
+      const compile = result.compile || {};
+
+      // Normalize to Judge0-compatible internal shape so downstream code is identical
+      const exitCode = run.code ?? 0;
+      let statusId = 3; // 3 = Accepted in Judge0 convention
+      if (compile.stderr)           statusId = 6; // Compile Error
+      else if (exitCode !== 0)      statusId = 11; // Runtime Error
+      else if (run.signal === "SIGKILL") statusId = 5; // TLE
+
+      return {
+        stdout: Buffer.from(run.stdout || "").toString("base64"),
+        stderr: Buffer.from(run.stderr || "").toString("base64"),
+        compile_output: Buffer.from(compile.stderr || compile.stdout || "").toString("base64"),
+        status: { id: statusId, description: exitCode === 0 ? "Accepted" : "Runtime Error" },
+        time: null,   // Piston doesn't expose timing
+        memory: null, // Piston doesn't expose memory
+      };
+    } catch (err: any) {
+      logger.error("Piston connection failed", { message: err.message });
+      throw new Error(`Piston API failed: ${err.message}`);
+    }
+  }
+
+  /**
+   * Unified execute:
+   *  - Self-hosted Judge0 (localhost)  → uses Judge0, no key needed
+   *  - RapidAPI Judge0                 → uses Judge0, key required
+   *  - No Judge0 URL / fallback        → tries Piston (may be rate-limited)
+   */
+  private async execute(sourceCode: string, language: string, stdin: string): Promise<any> {
+    const isLocalJudge0 = env.JUDGE0_API_URL.includes("localhost") || env.JUDGE0_API_URL.includes("127.0.0.1");
+    const hasCloudKey   = !!env.JUDGE0_API_KEY;
+
+    if (isLocalJudge0 || hasCloudKey) {
+      return this.executeOnJudge0(sourceCode, language, stdin);
+    }
+
+    // Fallback to Piston if no Judge0 configured
+    logger.info("No Judge0 configured — trying Piston (free executor)");
+    return this.executeOnPiston(sourceCode, language, stdin);
+  }
+
   /**
    * Helper to execute a submission on Judge0 with retry polling if needed.
    */
@@ -625,7 +824,7 @@ export class ExecutionService {
    * Run code with custom input stdin (no DB logs, no tests verification)
    */
   async runCode(language: string, sourceCode: string, stdin: string = ""): Promise<RunCodeResponseDto> {
-    const result = await this.executeOnJudge0(sourceCode, language, stdin);
+    const result = await this.execute(sourceCode, language, stdin);
 
     const stdout = decodeBase64(result.stdout);
     const stderr = decodeBase64(result.stderr);
@@ -723,7 +922,7 @@ export class ExecutionService {
     for (let i = 0; i < testCases.length; i++) {
       const tc = testCases[i];
       
-      const res = await this.executeOnJudge0(wrappedCode, language, tc.input);
+      const res = await this.execute(wrappedCode, language, tc.input);
 
       const tcStdout = decodeBase64(res.stdout).trim();
       const tcStderr = decodeBase64(res.stderr).trim();

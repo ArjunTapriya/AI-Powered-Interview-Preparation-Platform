@@ -153,6 +153,11 @@ export const MentorChatPanel: React.FC<MentorChatPanelProps> = ({
     streamMessage(text, 'general');
   };
 
+  const handleQuickAction = (defaultPrompt: string, mode: 'hint' | 'debug' | 'complexity') => {
+    const customPrompt = input.trim() ? `${defaultPrompt}\n\nMy question/thoughts: ${input.trim()}` : defaultPrompt;
+    streamMessage(customPrompt, mode);
+  };
+
   return (
     <div className="flex flex-col h-full bg-[#0d1117] rounded-xl border border-[rgba(255,255,255,0.08)] overflow-hidden">
       {/* Header */}
@@ -218,21 +223,21 @@ export const MentorChatPanel: React.FC<MentorChatPanelProps> = ({
       {/* Quick Action Buttons */}
       <div className="px-4 py-2 flex gap-2 overflow-x-auto border-t border-[rgba(255,255,255,0.06)]">
         <button
-          onClick={() => streamMessage("I'm stuck. Can you give me a small hint?", 'hint')}
+          onClick={() => handleQuickAction("I'm stuck. Can you give me a small hint?", 'hint')}
           disabled={loading}
           className="text-xs bg-indigo-600/80 hover:bg-indigo-500 disabled:opacity-40 text-white px-3 py-1.5 rounded-full whitespace-nowrap transition-all flex items-center gap-1"
         >
           💡 Hint
         </button>
         <button
-          onClick={() => streamMessage("My code isn't working. Can you spot any issues?", 'debug')}
+          onClick={() => handleQuickAction("My code isn't working. Can you spot any issues?", 'debug')}
           disabled={loading}
           className="text-xs bg-rose-600/80 hover:bg-rose-500 disabled:opacity-40 text-white px-3 py-1.5 rounded-full whitespace-nowrap transition-all flex items-center gap-1"
         >
           🐛 Debug
         </button>
         <button
-          onClick={() => streamMessage("Analyze the time and space complexity of my code.", 'complexity')}
+          onClick={() => handleQuickAction("Analyze the time and space complexity of my code.", 'complexity')}
           disabled={loading}
           className="text-xs bg-emerald-600/80 hover:bg-emerald-500 disabled:opacity-40 text-white px-3 py-1.5 rounded-full whitespace-nowrap transition-all flex items-center gap-1"
         >

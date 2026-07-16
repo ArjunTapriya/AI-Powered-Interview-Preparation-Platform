@@ -61,4 +61,43 @@ export const aiFeedbackController = {
       return;
     }
   },
+
+  renameConversation: async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({ success: false, message: "Unauthorized" });
+        return;
+      }
+      const conversationId = req.params.conversationId as string;
+      const { title } = req.body;
+
+      await aiFeedbackService.renameConversation(userId, conversationId, title);
+      res.json({ success: true, message: "Conversation renamed successfully" });
+      return;
+    } catch (error: any) {
+      logger.error("Error renaming AI feedback conversation", { error: error.message });
+      res.status(500).json({ success: false, message: error.message });
+      return;
+    }
+  },
+
+  deleteConversation: async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({ success: false, message: "Unauthorized" });
+        return;
+      }
+      const conversationId = req.params.conversationId as string;
+
+      await aiFeedbackService.deleteConversation(userId, conversationId);
+      res.json({ success: true, message: "Conversation deleted successfully" });
+      return;
+    } catch (error: any) {
+      logger.error("Error deleting AI feedback conversation", { error: error.message });
+      res.status(500).json({ success: false, message: error.message });
+      return;
+    }
+  },
 };

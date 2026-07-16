@@ -24,12 +24,10 @@ export const NotesResources: React.FC = () => {
     >
       <HeroSection />
       
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-8">
+      <div className="grid grid-cols-1 gap-8">
         
         {/* Main Content Column */}
         <div className="flex flex-col min-w-0">
-          <SmartSearch />
-
           
           <div className="mb-10">
             <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
@@ -39,18 +37,6 @@ export const NotesResources: React.FC = () => {
           </div>
 
           <DSANotesSection notes={mockDSANotes} />
-        </div>
-
-        {/* Right Sidebar Column */}
-        <div className="hidden xl:block">
-          <div className="sticky top-24">
-            <AIInsightsSidebar insights={mockInsights} />
-          </div>
-        </div>
-
-        {/* Mobile Insights (Shows below content on smaller screens) */}
-        <div className="xl:hidden mt-8">
-          <AIInsightsSidebar insights={mockInsights} />
         </div>
 
       </div>

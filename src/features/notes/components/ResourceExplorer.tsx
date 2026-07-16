@@ -46,13 +46,6 @@ export const ResourceExplorer: React.FC<Props> = ({ resources }) => {
             </button>
           ))}
         </div>
-        
-        <div className="hidden sm:flex items-center gap-2 text-xs text-gray-400 ml-4 shrink-0">
-          <span>Sort by:</span>
-          <button className="flex items-center gap-1 bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg border border-surface-border text-white transition-colors">
-            Most Relevant <ChevronDown size={14} />
-          </button>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

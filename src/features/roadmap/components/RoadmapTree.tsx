@@ -156,9 +156,8 @@ const fallbackSyllabusNodes: SyllabusNode[] = [
 export const RoadmapTree: React.FC = () => {
   const navigate = useNavigate();
   const { history, prepGuidesCache, isGeneratingGuide, updatePrepGuideProgress } = useApp() as any;
-  
-  const hasHRHistory = history?.some((h: any) => h.type === "Behavioral");
-  const hasTechHistory = history?.some((h: any) => h.type === "Technical");
+  const hasHRHistory = history?.some((h: any) => ["Behavioral", "HR"].includes(h.type || h.interviewType));
+  const hasTechHistory = history?.some((h: any) => ["Technical", "DSA", "System Design"].includes(h.type || h.interviewType));
 
   const hrSteps = prepGuidesCache?.Behavioral?.steps || [];
   const techSteps = prepGuidesCache?.Technical?.steps || [];

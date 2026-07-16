@@ -165,6 +165,16 @@ Use this context to personalize your advice when relevant (e.g., if they ask abo
   }
 
   /**
+   * Rename a conversation
+   */
+  async renameConversation(userId: string, conversationId: string, title: string) {
+    return prisma.conversation.updateMany({
+      where: { id: conversationId, userId },
+      data: { title }
+    });
+  }
+
+  /**
    * Clear all (or delete specific) conversations
    */
   async deleteConversation(userId: string, conversationId: string) {

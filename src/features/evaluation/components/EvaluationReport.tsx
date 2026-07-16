@@ -106,8 +106,8 @@ export const EvaluationReport: React.FC = () => {
       <div className="w-full animate-fadeIn px-4 pt-0 pb-6 text-left">
 
         <div className="grid grid-cols-1 gap-4">
-          {history && history.length > 0 ? (
-            history.map((session: any, idx: number) => {
+          {history && history.length > 0 && history.some((s: any) => s.overallScore !== undefined && s.overallScore !== null) ? (
+            history.filter((s: any) => s.overallScore !== undefined && s.overallScore !== null).map((session: any, idx: number) => {
               const score = session.overallScore !== undefined ? session.overallScore : (session.score !== undefined ? session.score : 0);
               const duration = session.durationMin !== undefined ? session.durationMin : (session.duration !== undefined ? session.duration : 0);
               const dateStr = new Date(session.createdAt || session.date).toLocaleDateString(undefined, {
@@ -140,7 +140,7 @@ export const EvaluationReport: React.FC = () => {
                   <div className="space-y-2">
                     <div className="flex items-center gap-3">
                       <span className="px-2.5 py-1 rounded bg-[rgba(var(--accent-rgb),0.1)] text-[var(--accent-primary)] border border-[rgba(var(--accent-rgb),0.2)] text-[10px] font-bold uppercase tracking-wider">
-                        {session.interviewType || session.type || "Practice"}
+                        { ["DSA", "System Design"].includes(session.interviewType || session.type) ? "Technical" : (session.interviewType || session.type || "Practice") }
                       </span>
                       <span className="text-[11px] text-gray-400 font-mono">
                         {dateStr}

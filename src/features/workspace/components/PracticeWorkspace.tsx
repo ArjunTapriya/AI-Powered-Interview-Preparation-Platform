@@ -311,7 +311,7 @@ export const PracticeWorkspace: React.FC = () => {
     setConsoleOutput(["Compiling files and running code in the Judge0 sandbox..."]);
 
     try {
-      const response = await apiFetch("/code/run", {
+      const response = await apiFetch("/execution/run", {
         method: "POST",
         body: JSON.stringify({
           language,
@@ -375,7 +375,7 @@ export const PracticeWorkspace: React.FC = () => {
     setConsoleOutput(["Running test cases and validating overall solution constraints..."]);
 
     try {
-      const response = await apiFetch(`/code/submit/${challenge.id}`, {
+      const response = await apiFetch(`/execution/submit/${challenge.id}`, {
         method: "POST",
         body: JSON.stringify({
           language,
@@ -405,12 +405,19 @@ export const PracticeWorkspace: React.FC = () => {
         if (result.executionResults) {
           result.executionResults.forEach((res: any) => {
             outputLines.push(
-              `${res.passed ? "✓" : "✗"} Test Case ${res.testCaseNumber}: ${res.passed ? "Success" : "Failed"}`
+              `${res.passed ? "✓" : "✗"} Test Case ${res.testCaseNumber}: ${res.passed ? "Accepted" : "Wrong Answer"}`
             );
+            if (!res.passed) {
+              outputLines.push(`  Expected: ${res.expectedOutput ?? "(none)"}`);
+              outputLines.push(`  Got:      ${res.actualOutput ?? "(none)"}`);
+              if (res.executionTime !== null && res.executionTime !== undefined) {
+                outputLines.push(`  Time: ${res.executionTime.toFixed(1)} ms`);
+              }
+            }
           });
         }
 
-        setConsoleOutput(outputLines);
+        setConsoleOutput(outputLines.filter(l => l !== ""));
       } else {
         setConsoleOutput([
           "Submission Failed",
@@ -954,9 +961,13 @@ export const PracticeWorkspace: React.FC = () => {
                                 ? "text-emerald-400 font-semibold py-0.5"
                                 : isError
                                   ? "text-rose-400 font-semibold py-0.5"
-                                  : line.startsWith("Compiling") || line.startsWith("Submission Status:")
-                                    ? "text-cyan-400 font-bold"
-                                    : "text-gray-300"
+                                  : line.startsWith("  Expected:") || line.startsWith("  Got:")
+                                    ? "text-amber-300/90 py-0.5 pl-2 border-l-2 border-amber-500/40 font-mono"
+                                    : line.startsWith("  Time:")
+                                      ? "text-gray-500 pl-2"
+                                      : line.startsWith("Compiling") || line.startsWith("Submission Status:")
+                                        ? "text-cyan-400 font-bold"
+                                        : "text-gray-300"
                             }
                             style={{ whiteSpace: "pre-wrap" }}
                           >
@@ -1020,69 +1031,14 @@ export const PracticeWorkspace: React.FC = () => {
 
           {/* Text-based chat controls */}
           <Card className="bg-[#0b1225] border-surface-border shrink-0 p-4 space-y-3">
-            <div className="text-xs font-mono text-gray-400 text-left">
-              Type message to interviewer:
-            </div>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const form = e.currentTarget;
-                const input = form.elements.namedItem("chatInput") as HTMLInputElement;
-                if (!input.value.trim()) return;
-                const userText = input.value.trim();
-                const newTimestamp = formatTime(timeLeft);
-                setChatLog((prev) => [
-                  ...prev,
-                  { speaker: "Candidate", text: userText, time: newTimestamp }
-                ]);
-                // Real AI Mentor Integration
-                const fetchMentorResponse = async (textToSend: string, endpoint: string = '/mentor/chat') => {
-                  try {
-                    const res = await apiFetch(endpoint, {
-                      method: 'POST',
-                      body: JSON.stringify({
-                        interviewSessionId: "active-session", // In reality, fetch from context
-                        questionId: challenge.id,
-                        currentCode: codeMap[language] || code,
-                        message: textToSend,
-                      }),
-                    });
-                    const data = await res.json();
-                    if (data.success) {
-                      setChatLog((prev) => [
-                        ...prev,
-                        { speaker: `Interviewer (${activePersona})`, text: data.data.response, time: formatTime(timeLeft) }
-                      ]);
-                    } else {
-                      setChatLog((prev) => [...prev, { speaker: 'System', text: 'Error connecting to Mentor.', time: formatTime(timeLeft) }]);
-                    }
-                  } catch (error) {
-                    setChatLog((prev) => [...prev, { speaker: 'System', text: 'Network Error.', time: formatTime(timeLeft) }]);
-                  }
-                };
-
-                fetchMentorResponse(userText, '/mentor/chat');
-
-                form.reset();
-              }}
-              className="flex gap-2"
-            >
-              <input
-                name="chatInput"
-                type="text"
-                placeholder="Explain your approach..."
-                className="flex-grow bg-black/40 border border-surface-border text-gray-200 text-xs px-3 py-2 rounded-lg outline-none focus:border-[var(--accent-primary)] font-sans"
-              />
-              <Button type="submit" variant="primary" size="sm" className="px-3">
-                Send
-              </Button>
-            </form>
-
             <div className="flex gap-2 justify-between">
               <button
                 onClick={() => {
-                  setChatLog((prev) => [...prev, { speaker: "Candidate", text: "I need a hint...", time: formatTime(timeLeft) }]);
-                  // Wrap in async IIFE or create a method
+                  setChatLog((prev) => [
+                    ...prev, 
+                    { speaker: "Candidate", text: "I need a hint...", time: formatTime(timeLeft) },
+                    { speaker: `Interviewer (${activePersona})`, text: "Wait................", time: formatTime(timeLeft) }
+                  ]);
                   (async () => {
                     try {
                       const res = await apiFetch(`/mentor/hint`, {
@@ -1091,9 +1047,19 @@ export const PracticeWorkspace: React.FC = () => {
                       });
                       const data = await res.json();
                       if (data.success) {
-                        setChatLog((prev) => [...prev, { speaker: `Interviewer (${activePersona})`, text: data.data.response, time: formatTime(timeLeft) }]);
+                        setChatLog((prev) => {
+                          const newLog = [...prev];
+                          if (newLog[newLog.length - 1]?.text === "Wait................") newLog.pop();
+                          return [...newLog, { speaker: `Interviewer (${activePersona})`, text: data.data.response, time: formatTime(timeLeft) }];
+                        });
                       }
-                    } catch (e) { }
+                    } catch (e) {
+                      setChatLog((prev) => {
+                        const newLog = [...prev];
+                        if (newLog[newLog.length - 1]?.text === "Wait................") newLog.pop();
+                        return [...newLog, { speaker: 'System', text: 'Network Error', time: formatTime(timeLeft) }];
+                      });
+                    }
                   })();
                 }}
                 className="text-[10px] bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/40 border border-indigo-500/30 px-2 py-1 rounded transition-colors"
@@ -1102,7 +1068,11 @@ export const PracticeWorkspace: React.FC = () => {
               </button>
               <button
                 onClick={() => {
-                  setChatLog((prev) => [...prev, { speaker: "Candidate", text: "Can you debug this?", time: formatTime(timeLeft) }]);
+                  setChatLog((prev) => [
+                    ...prev, 
+                    { speaker: "Candidate", text: "Can you debug this?", time: formatTime(timeLeft) },
+                    { speaker: `Interviewer (${activePersona})`, text: "Wait................", time: formatTime(timeLeft) }
+                  ]);
                   (async () => {
                     try {
                       const res = await apiFetch(`/mentor/debug`, {
@@ -1111,9 +1081,19 @@ export const PracticeWorkspace: React.FC = () => {
                       });
                       const data = await res.json();
                       if (data.success) {
-                        setChatLog((prev) => [...prev, { speaker: `Interviewer (${activePersona})`, text: data.data.response, time: formatTime(timeLeft) }]);
+                        setChatLog((prev) => {
+                          const newLog = [...prev];
+                          if (newLog[newLog.length - 1]?.text === "Wait................") newLog.pop();
+                          return [...newLog, { speaker: `Interviewer (${activePersona})`, text: data.data.response, time: formatTime(timeLeft) }];
+                        });
                       }
-                    } catch (e) { }
+                    } catch (e) {
+                      setChatLog((prev) => {
+                        const newLog = [...prev];
+                        if (newLog[newLog.length - 1]?.text === "Wait................") newLog.pop();
+                        return [...newLog, { speaker: 'System', text: 'Network Error', time: formatTime(timeLeft) }];
+                      });
+                    }
                   })();
                 }}
                 className="text-[10px] bg-rose-500/20 text-rose-300 hover:bg-rose-500/40 border border-rose-500/30 px-2 py-1 rounded transition-colors"
@@ -1122,7 +1102,11 @@ export const PracticeWorkspace: React.FC = () => {
               </button>
               <button
                 onClick={() => {
-                  setChatLog((prev) => [...prev, { speaker: "Candidate", text: "Analyze complexity", time: formatTime(timeLeft) }]);
+                  setChatLog((prev) => [
+                    ...prev, 
+                    { speaker: "Candidate", text: "Analyze complexity", time: formatTime(timeLeft) },
+                    { speaker: `Interviewer (${activePersona})`, text: "Wait................", time: formatTime(timeLeft) }
+                  ]);
                   (async () => {
                     try {
                       const res = await apiFetch(`/mentor/complexity`, {
@@ -1131,9 +1115,19 @@ export const PracticeWorkspace: React.FC = () => {
                       });
                       const data = await res.json();
                       if (data.success) {
-                        setChatLog((prev) => [...prev, { speaker: `Interviewer (${activePersona})`, text: data.data.response, time: formatTime(timeLeft) }]);
+                        setChatLog((prev) => {
+                          const newLog = [...prev];
+                          if (newLog[newLog.length - 1]?.text === "Wait................") newLog.pop();
+                          return [...newLog, { speaker: `Interviewer (${activePersona})`, text: data.data.response, time: formatTime(timeLeft) }];
+                        });
                       }
-                    } catch (e) { }
+                    } catch (e) {
+                      setChatLog((prev) => {
+                        const newLog = [...prev];
+                        if (newLog[newLog.length - 1]?.text === "Wait................") newLog.pop();
+                        return [...newLog, { speaker: 'System', text: 'Network Error', time: formatTime(timeLeft) }];
+                      });
+                    }
                   })();
                 }}
                 className="text-[10px] bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/40 border border-emerald-500/30 px-2 py-1 rounded transition-colors"

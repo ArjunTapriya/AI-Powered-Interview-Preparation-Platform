@@ -157,19 +157,40 @@ export const ResumeUpload: React.FC = () => {
               <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                 Target Role (Optional)
               </label>
-              <select
+              <input
+                type="text"
+                list="role-suggestions"
                 value={targetRole}
                 onChange={(e) => setTargetRole(e.target.value)}
+                placeholder="e.g. Frontend Engineer (Optional)"
                 className="w-full px-3 py-2.5 bg-surface-solid border border-surface-border text-white placeholder-gray-600 rounded-lg text-sm focus:outline-none focus:border-[var(--accent-primary)] focus:ring-1 focus:ring-[var(--accent-primary)]/30 font-mono"
-              >
-                <option value="">Select a role... (Optional)</option>
-                <option value="Frontend Engineer">Frontend Engineer</option>
-                <option value="Backend Engineer">Backend Engineer</option>
-                <option value="Full Stack Engineer">Full Stack Engineer</option>
-                <option value="Software Engineer">Software Engineer</option>
-                <option value="Data Scientist">Data Scientist</option>
-                <option value="Product Manager">Product Manager</option>
-              </select>
+              />
+              <datalist id="role-suggestions">
+                <option value="Software Engineer" />
+                <option value="Frontend Engineer" />
+                <option value="Backend Engineer" />
+                <option value="Full Stack Engineer" />
+                <option value="Mobile Developer (iOS/Android)" />
+                <option value="Data Scientist" />
+                <option value="Data Analyst" />
+                <option value="Data Engineer" />
+                <option value="Machine Learning Engineer" />
+                <option value="AI Engineer" />
+                <option value="DevOps Engineer" />
+                <option value="Cloud Architect" />
+                <option value="Site Reliability Engineer (SRE)" />
+                <option value="Cybersecurity Analyst" />
+                <option value="Security Engineer" />
+                <option value="QA Engineer / SDET" />
+                <option value="System Administrator" />
+                <option value="UI/UX Designer" />
+                <option value="Product Manager" />
+                <option value="Engineering Manager" />
+                <option value="Game Developer" />
+                <option value="Blockchain Developer" />
+                <option value="Embedded Systems Engineer" />
+                <option value="Network Engineer" />
+              </datalist>
             </div>
 
             {/* Drag & Drop Zone */}

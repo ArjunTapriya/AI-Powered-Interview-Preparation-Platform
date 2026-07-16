@@ -12,7 +12,7 @@ export class InterviewsRepository {
     data: any,
     metrics?: any
   ): Promise<SessionWithReport> {
-    return prisma.interviewSession.create({
+    const session = await prisma.interviewSession.create({
       data: {
         ...data,
         userId,
@@ -36,6 +36,22 @@ export class InterviewsRepository {
         evaluation: true,
       },
     });
+
+    // Enforce max 7 sessions per user
+    const allSessions = await prisma.interviewSession.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      select: { id: true },
+    });
+
+    if (allSessions.length > 7) {
+      const idsToDelete = allSessions.slice(7).map((s) => s.id);
+      await prisma.interviewSession.deleteMany({
+        where: { id: { in: idsToDelete } },
+      });
+    }
+
+    return session;
   }
 
   /**

@@ -1,0 +1,63 @@
+# Judge0 CE — Self-Hosted Code Execution Engine
+# Run: docker-compose -f docker-compose.judge0.yml up -d
+# Stop: docker-compose -f docker-compose.judge0.yml down
+#
+# Once running, Judge0 is available at: http://localhost:2358
+# Test: curl http://localhost:2358/about
+
+version: "3.9"
+
+services:
+  judge0-server:
+    image: mrkushalsm/judge0:latest
+    container_name: judge0_server
+    volumes:
+      - ./judge0.conf:/judge0.conf:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    ports:
+      - "2358:2358"
+    privileged: true
+    restart: unless-stopped
+    depends_on:
+      - judge0-db
+      - judge0-redis
+    environment:
+      RAILS_ENV: production
+
+  judge0-workers:
+    image: mrkushalsm/judge0:latest
+    container_name: judge0_workers
+    command: ["./scripts/workers"]
+    volumes:
+      - ./judge0.conf:/judge0.conf:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    privileged: true
+    restart: unless-stopped
+    depends_on:
+      - judge0-db
+      - judge0-redis
+    environment:
+      RAILS_ENV: production
+
+  judge0-db:
+    image: postgres:13
+    container_name: judge0_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: judge0
+      POSTGRES_PASSWORD: judge0pass
+      POSTGRES_DB: judge0
+    volumes:
+      - judge0_pg_data:/var/lib/postgresql/data
+
+  judge0-redis:
+    image: redis:6
+    container_name: judge0_redis
+    restart: unless-stopped
+    command: redis-server --requirepass judge0pass
+    volumes:
+      - judge0_redis_data:/data
+
+volumes:
+  judge0_pg_data:
+  judge0_redis_data:

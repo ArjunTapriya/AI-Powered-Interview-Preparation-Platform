@@ -6,6 +6,22 @@ export class ConversationRepository {
    * Get or create a conversation for an interview session
    */
   async getOrCreateSessionConversation(userId: string, interviewSessionId: string): Promise<Conversation> {
+    if (interviewSessionId === "active-session") {
+      let practiceSession = await prisma.interviewSession.findFirst({
+        where: { userId, status: "PRACTICE_WORKSPACE" }
+      });
+      if (!practiceSession) {
+        practiceSession = await prisma.interviewSession.create({
+          data: {
+            userId,
+            interviewType: "DSA",
+            status: "PRACTICE_WORKSPACE"
+          }
+        });
+      }
+      interviewSessionId = practiceSession.id;
+    }
+
     let conversation = await prisma.conversation.findUnique({
       where: { interviewSessionId },
     });

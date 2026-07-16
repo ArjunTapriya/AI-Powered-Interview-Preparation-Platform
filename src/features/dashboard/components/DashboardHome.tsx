@@ -139,7 +139,8 @@ export const DashboardHome: React.FC = () => {
   const insight = useMemo(() => {
     const latestSession = history && history.length > 0 ? history[0] : null;
     if (latestSession) {
-      const typeStr = latestSession.type;
+      const rawType = latestSession.type;
+      const typeStr = ["DSA", "System Design"].includes(rawType) ? "Technical" : rawType;
       const score = latestSession.overallScore;
       const notes = latestSession.feedbackNotes || [];
       const primaryAdvice = notes.length > 0 
@@ -149,7 +150,7 @@ export const DashboardHome: React.FC = () => {
       return {
         status: `Latest Mock Interview (${typeStr}) scored ${score}%.`,
         nextStep: `Next step: ${primaryAdvice}`,
-        focus: typeStr === "DSA" ? "DSA Practice" : typeStr === "System Design" ? "System Design" : "Behavioral Prep"
+        focus: typeStr === "Technical" ? "Technical Practice" : "Behavioral Prep"
       };
     }
 
@@ -419,13 +420,18 @@ export const DashboardHome: React.FC = () => {
     return Math.round((completed / total) * 100);
   };
 
-  const getRoadmapProgress = () => {
+  const getTechRoadmapProgress = () => {
     const completedTech = prepGuidesCache?.Technical?.completedIndices?.length || 0;
+    const totalSteps = prepGuidesCache?.Technical?.steps?.length || 10;
+    if (totalSteps === 0) return 0;
+    return Math.round((completedTech / totalSteps) * 100);
+  };
+
+  const getHrRoadmapProgress = () => {
     const completedHr = prepGuidesCache?.Behavioral?.completedIndices?.length || 0;
-    const totalCompleted = completedTech + completedHr;
-    
-    // As per requirement, 1 step completed = 10% progress
-    return Math.min(100, totalCompleted * 10);
+    const totalSteps = prepGuidesCache?.Behavioral?.steps?.length || 10;
+    if (totalSteps === 0) return 0;
+    return Math.round((completedHr / totalSteps) * 100);
   };
 
   return (
@@ -553,25 +559,30 @@ export const DashboardHome: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         
         {/* Syllabus Node Milestones */}
-        <div className="new-card p-5 flex flex-col justify-between">
-          <h3 className="text-[14px] font-bold text-white flex items-center gap-2 mb-6">
+        <div className="new-card p-5 flex flex-col gap-6">
+          <h3 className="text-[14px] font-bold text-white flex items-center gap-2">
             <BookOpen size={16} className="text-[var(--accent-purple)]" /> Syllabus Node Milestones
           </h3>
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-[11px] text-[var(--text-secondary-new)]">
-                <span>Algorithms & Data Structures</span>
-                <span className="text-[var(--accent-orange)] font-bold">{getDsaProgress()}%</span>
-              </div>
-              <ProgressBar value={getDsaProgress()} size="sm" />
+          <div className="space-y-1.5">
+            <div className="flex justify-between text-[11px] text-[var(--text-secondary-new)]">
+              <span>Algorithms & Data Structures</span>
+              <span className="text-[var(--accent-orange)] font-bold">{getDsaProgress()}%</span>
             </div>
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-[11px] text-[var(--text-secondary-new)]">
-                <span>Roadmap Completion</span>
-                <span className="text-[var(--accent-orange)] font-bold">{getRoadmapProgress()}%</span>
-              </div>
-              <ProgressBar value={getRoadmapProgress()} size="sm" />
+            <ProgressBar value={getDsaProgress()} size="sm" />
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex justify-between text-[11px] text-[var(--text-secondary-new)]">
+              <span>Technical Roadmap Completion</span>
+              <span className="text-[var(--accent-orange)] font-bold">{getTechRoadmapProgress()}%</span>
             </div>
+            <ProgressBar value={getTechRoadmapProgress()} size="sm" />
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex justify-between text-[11px] text-[var(--text-secondary-new)]">
+              <span>Behavioral Roadmap Completion</span>
+              <span className="text-[var(--accent-orange)] font-bold">{getHrRoadmapProgress()}%</span>
+            </div>
+            <ProgressBar value={getHrRoadmapProgress()} size="sm" />
           </div>
         </div>
 
@@ -632,7 +643,7 @@ export const DashboardHome: React.FC = () => {
             </button>
           </div>
           <div className="flex flex-col gap-4 flex-1">
-            {history && history.length > 0 ? history.slice(0, 3).map((session: any, i: number) => {
+            {history && history.length > 0 && history.some((s: any) => s.overallScore !== undefined && s.overallScore !== null) ? history.filter((s: any) => s.overallScore !== undefined && s.overallScore !== null).slice(0, 3).map((session: any, i: number) => {
               const score = session.overallScore !== undefined ? session.overallScore : (session.score !== undefined ? session.score : 0);
               const duration = session.durationMin !== undefined ? session.durationMin : (session.duration !== undefined ? session.duration : 0);
               const dateObj = new Date(session.createdAt || session.date);
@@ -651,7 +662,7 @@ export const DashboardHome: React.FC = () => {
                   </div>
                   <div className="flex-1 overflow-hidden">
                     <h5 className="text-[11px] font-bold text-white truncate">
-                      {session.company || "Uploaded Resume Practice"} {session.interviewType || session.role || ""}
+                      {session.company || "Uploaded Resume Practice"} { ["DSA", "System Design"].includes(session.interviewType || session.role || "") ? "Technical" : (session.interviewType || session.role || "") }
                     </h5>
                     <p className="text-[10px] text-[var(--text-secondary-new)] truncate">Score: {score}% • {duration} min</p>
                   </div>

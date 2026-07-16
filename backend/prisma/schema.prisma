@@ -363,6 +363,7 @@ model Conversation {
   id                 String   @id @default(uuid())
   userId             String
   interviewSessionId String?  @unique
+  title              String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   

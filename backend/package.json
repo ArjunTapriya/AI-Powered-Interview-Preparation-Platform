@@ -23,6 +23,8 @@
   "license": "MIT",
   "dependencies": {
     "@prisma/client": "^6.9.0",
+    "@supabase/ssr": "^0.12.3",
+    "@supabase/supabase-js": "^2.110.6",
     "@types/cookie-parser": "^1.4.10",
     "@types/pdfkit": "^0.17.6",
     "bcrypt": "^6.0.0",
